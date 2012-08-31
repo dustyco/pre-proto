@@ -42,7 +42,6 @@ void TutorialApplication::createScene(void)
 	Ogre::Light* light = mSceneMgr->createLight("MainLight");
 	light->setPosition(20.0f, 80.0f, 50.0f);
 }
-
 void TutorialApplication::createCamera(void)
 {
 	// create the camera
@@ -54,7 +53,14 @@ void TutorialApplication::createCamera(void)
 	// create a default camera controller
 	mCameraMan = new OgreBites::SdkCameraMan(mCamera);
 }
-
+bool TutorialApplication::frameStarted(const Ogre::FrameEvent& evt)
+{
+	double time = (double)timer.getMicroseconds()/1e6;
+	
+	mSceneMgr->getSceneNode("HeadNode")->setPosition(sin(time*4)*30,0,0);
+	
+	return true;
+}
 
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32

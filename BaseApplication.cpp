@@ -237,6 +237,13 @@ bool BaseApplication::setup(void)
     return true;
 };
 //-------------------------------------------------------------------------------------
+bool BaseApplication::frameStarted(const Ogre::FrameEvent& evt)
+{
+	unsigned long time = timer.getMilliseconds();
+	std::cout << time-last_time << std::endl;
+	last_time = time;
+	return true;
+}
 bool BaseApplication::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
     if(mWindow->isClosed())
