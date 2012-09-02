@@ -1,0 +1,42 @@
+ETF, the Extensible Text Format, is a text-based format, which requires 0x0A line
+endings. It allows encoding arbitrary data and is easy for humans to read and
+write. The format is a sequence of key-value mappings, formatted as follows:
+
+key=value;
+
+Data types available are:
+int	- Signed long integer
+string	- String
+float	- Double-precision floating point number
+bool	- Boolean
+list	- List of objects of arbitrary types
+pair	- Pair of objects of arbitrary types
+map	- Key-value mapping
+
+Values should be specified as C++-style literals for their respective types
+except in the cases of int, list, map, and pair. When specifying int literals
+it is not syntactically correct to append L to the end of a long number. In
+the case of pair, the definition syntax is as follows:
+	<objectA, objectB>
+
+And in the case of list, the definition is as follows:
+	{
+		object1,
+		object2,
+		object3,
+		object4,
+		object5,
+	};
+Please note that the comma after the final element is optional, as are
+newlines. The semicolon must still, however, terminate the mapping.
+
+Map objects are specified as follows:
+	(
+		key=value,
+		key=value,
+		key=value,
+	);
+Please note that in place of a semicolon to terminate a mapping, a comma
+should be used inside of a mapping definition. All other syntax is identical
+to the syntax used outside of mappings. Similar to list definitions, the
+newlines and final comma are optional, but the terminating semicolon is not.
