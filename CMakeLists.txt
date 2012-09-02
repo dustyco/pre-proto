@@ -27,7 +27,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
 	# differentiation between debug and release builds.
 	set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
-
 set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
 
@@ -58,7 +57,8 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	set(Boost_ADDITIONAL_VERSIONS "1.44" "1.44.0" "1.42" "1.42.0" "1.41.0" "1.41" "1.40.0" "1.40" "1.39.0" "1.39" "1.38.0" "1.38" "1.37.0" "1.37" )
 	# Components that need linking (NB does not include header-only components like bind)
 	set(OGRE_BOOST_COMPONENTS thread date_time system)
-	find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
+	set(GAME_BOOST_COMPONENTS filesystem chrono)
+	find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} ${GAME_BOOST_COMPONENTS} QUIET)
 	
 	if (NOT Boost_FOUND)
 	    # Try again with the other type of libs
@@ -79,27 +79,65 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 endif ()
 
+# Define a macro to setup the sources
+macro (add_sources)
+	file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+	foreach(_src ${ARGN})
+		if(_relPath)
+			list(APPEND preproto_SRC "${_relPath}/${_src}")
+		else()
+			list(APPEND preproto_SRC "${_src}")
+		endif()
+	endforeach()
+	if(_relPath)
+		# Propagate to parent
+		set(preproto_SRC ${preproto_SRC} PARENT_SCOPE)
+	endif()
+endmacro()
+
+# Define a macro so submodules can require their own libraries. Use it like
+# target_link_libraries
+macro (require_libraries)
+	foreach(_lib ${ARGN})
+		list(APPEND preproto_USERLIBS "${_lib}")
+	endforeach()
+	set(preproto_USERLIBS ${preproto_USERLIBS} PARENT_SCOPE)
+endmacro()
+macro (propagate_libs)
+	set(preproto_USERLIBS ${preproto_USERLIBS} PARENT_SCOPE)
+endmacro()
+
+# Add sources and custom libraries
+set(preproto_SRC "")
+add_subdirectory(src)
 
 # Source files
-set(HDRS
-	./BaseApplication.h
-	./TutorialApplication.h
-	)
-set(SRCS
-	./BaseApplication.cpp
-	./TutorialApplication.cpp
-	)
+# set(HDRS
+# 	./BaseApplication.h
+# 	./TutorialApplication.h
+# 	)
+# set(SRCS
+# 	./BaseApplication.cpp
+# 	./TutorialApplication.cpp
+# 	)
+
 include_directories(
 	${OIS_INCLUDE_DIRS}
 	${OGRE_INCLUDE_DIRS}
 	${OGRE_SAMPLES_INCLUDEPATH}
 	)
 
-add_executable(${CMAKE_PROJECT_NAME} WIN32 ${HDRS} ${SRCS})
+#add_executable(${CMAKE_PROJECT_NAME} WIN32 ${HDRS} ${SRCS})
+add_executable(${CMAKE_PROJECT_NAME} WIN32 ${preproto_SRC})
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES DEBUG_POSTFIX _d)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
+
+# Add propagated libraries
+foreach(_lib ${preproto_USERLIBS})
+	target_link_libraries(${CMAKE_PROJECT_NAME} ${_lib})
+endforeach()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/bin)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)

@@ -1,5 +1,12 @@
+# Cmake files
 cmake_install.cmake
-*.swp
 CMakeFiles/
 Makefile
 CMakeCache.txt
+
+# Vim swapfiles
+*.swp
+
+# Files from in-source builds
+Ogre.log
+pre-proto
