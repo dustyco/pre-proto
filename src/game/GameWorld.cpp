@@ -1,4 +1,5 @@
 #include "GameWorld.h"
+#include <stdarg.h>
 #include "../logging/logging.h"
 
 using namespace Game;
@@ -24,7 +25,7 @@ void GameWorld::update (float dt) {
 	}
 }
 
-EntID GameWorld::createEntity (std::string name) {
+EntID GameWorld::createEntity (std::string name, ...) {
 	// Create the entity
 	Entity* ent = EntityFactory::buildEntity(name);
 	ent->parent = this;
@@ -35,7 +36,13 @@ EntID GameWorld::createEntity (std::string name) {
 		delete ent;
 		return 0;
 	}
-	ent->init();
+	
+	// Initialize the entity
+	// Initialize the variable argument list
+	va_list l;
+	va_start(l, name);
+	ent->init(l);
+	va_end(l);
 
 	// Add to data structures and return
 	m_ents[ent->id] = ent;

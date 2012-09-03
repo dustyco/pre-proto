@@ -18,7 +18,7 @@ namespace Game {
 		void update (float dt);
 
 		// Entity functions
-		EntID createEntity (std::string name);
+		EntID createEntity (std::string name, ...);
 		// Note that these don't actually deallocate the entity, they just
 		// remove it from the GameWorld and set its ID and parent to 0.
 		void deleteEntity (Entity* ent);
