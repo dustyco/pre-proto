@@ -52,7 +52,6 @@ public:
 	etfnode& getRoot();
 
 	void dump(std::ostream &s, bool formatted=false);
-	void dumpBinary(std::ostream &s);
 
 private:
 	etfnode m_root;

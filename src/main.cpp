@@ -13,7 +13,7 @@ int main (int argc, char **argv)
 		err = a.run();
 		a.shutdown();
 		return err;
-	} catch(std::exception e) {
+	} catch (std::exception e) {
 		fprintf(stderr, "Unhandled exception. Application terminated\n");
 	}
 }
