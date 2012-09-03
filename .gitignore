@@ -10,3 +10,6 @@ CMakeCache.txt
 # Files from in-source builds
 Ogre.log
 pre-proto
+
+# Out of source build folder
+build/
