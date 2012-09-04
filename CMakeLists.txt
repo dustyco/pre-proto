@@ -56,7 +56,7 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	
 	# Components that need linking (NB does not include header-only components like bind)
 	set(OGRE_BOOST_COMPONENTS thread date_time system)
-	set(GAME_BOOST_COMPONENTS filesystem chrono)
+	set(GAME_BOOST_COMPONENTS filesystem chrono program_options)
 	find_package(Boost 1.50.0 COMPONENTS ${OGRE_BOOST_COMPONENTS} ${GAME_BOOST_COMPONENTS} QUIET)
 	
 	if (NOT Boost_FOUND)

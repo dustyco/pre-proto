@@ -3,6 +3,9 @@
 int Application::init (int argc, char **argv) {
 	m_log = Logging::LogManager::getInstance();
 	m_log->addLogger(new Logging::ConsoleLogger());
+	
+	// Initialize the configuration system
+	m_config = new ConfigManager(argc, argv);
 
 	// Initialize the Ogre root
 	m_root = new Ogre::Root();

@@ -2,6 +2,7 @@
 #include <OGRE/Ogre.h>
 
 #include "logging/logging.h"
+#include "config/config.h"
 #include "input/input.h"
 
 class Application {
@@ -12,6 +13,7 @@ public:
 
 private:
 	Logging::LogManager* m_log;
+	ConfigManager* m_config;
 	InputManager* m_input;
 
 	Ogre::Root* m_root;

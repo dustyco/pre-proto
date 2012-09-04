@@ -1,1 +1,1 @@
-add_sources(etf.cpp)
+add_sources(etf.cpp ConfigManager.cpp)
