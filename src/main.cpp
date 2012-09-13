@@ -14,7 +14,7 @@ int main (int argc, char **argv)
 		a.shutdown();
 		return err;
 	} catch (std::exception e) {
-		fprintf(stderr, "Unhandled exception. Application terminated\n");
+		fprintf(stderr, "Unhandled exception: %s\n", e.what());
 	}
 }
 

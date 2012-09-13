@@ -2,7 +2,14 @@
 
 int Application::init (int argc, char **argv) {
 	m_log = Logging::LogManager::getInstance();
-	m_log->addLogger(new Logging::ConsoleLogger());
+	m_log->addLogger(new Logging::ConsoleLogger(), Logging::DEBUG);
+
+	// In order to avoid Ogre's default logging behavior we have to create
+	// the Ogre::LogManager before initializing the Root object.
+	Ogre::LogManager* ogreLogMgr = new Ogre::LogManager();
+	Logging::OgreLogAdapter* logAdapter = new Logging::OgreLogAdapter();
+	Ogre::LogManager::getSingleton().createLog("Ogre.log", true, true, true)->addListener(logAdapter);
+	ogreLogMgr->setLogDetail(Ogre::LL_LOW);
 	
 	// Initialize the configuration system
 	m_config = new ConfigManager(argc, argv);
@@ -55,4 +62,6 @@ int Application::run () {
 
 void Application::shutdown () {
 	m_root->shutdown();
+	delete m_config;
+	PRINT("Proto shut down. Thanks for playing!");
 }

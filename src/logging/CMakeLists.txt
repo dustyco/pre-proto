@@ -1,1 +1,1 @@
-add_sources(ConsoleLogger.cpp LogManager.cpp)
+add_sources(ConsoleLogger.cpp LogManager.cpp OgreLogAdapter.cpp)

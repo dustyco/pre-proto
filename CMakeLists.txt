@@ -138,25 +138,25 @@ foreach(_lib ${preproto_USERLIBS})
 	target_link_libraries(${CMAKE_PROJECT_NAME} ${_lib})
 endforeach()
 
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/bin)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)
 
 # post-build copy for win32
 if (WIN32 AND NOT MINGW)
 	add_custom_command( TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
-	    COMMAND if not exist .\\dist\\bin mkdir .\\dist\\bin )
+	    COMMAND if not exist .\\dist mkdir .\\dist )
 	add_custom_command( TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-	    COMMAND copy \"$(TargetPath)\" .\\dist\\bin )
+	    COMMAND copy \"$(TargetPath)\" .\\dist )
 endif (WIN32 AND NOT MINGW)
 
 if (MINGW OR UNIX)
-	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/dist/bin)
+	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/dist)
 endif (MINGW OR UNIX)
 
 if (WIN32)
 	install(TARGETS
 		${CMAKE_PROJECT_NAME}
-		RUNTIME DESTINATION bin
+		RUNTIME DESTINATION .
 		CONFIGURATIONS All
 		)
 	install(DIRECTORY
@@ -167,13 +167,13 @@ if (WIN32)
 	install(FILES
 		${CMAKE_SOURCE_DIR}/dist/bin/cfg-windows/plugins.cfg
 		${CMAKE_SOURCE_DIR}/dist/bin/resources.cfg
-		DESTINATION bin
+		DESTINATION .
 		CONFIGURATIONS Release RelWithDebInfo
 		)
 	install(FILES
 		${CMAKE_SOURCE_DIR}/dist/bin/cfg-windows/plugins_d.cfg
 		${CMAKE_SOURCE_DIR}/dist/bin/resources_d.cfg
-		DESTINATION bin
+		DESTINATION .
 		CONFIGURATIONS Debug
 		)
 	install(FILES
@@ -181,7 +181,7 @@ if (WIN32)
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
 		${OGRE_PLUGIN_DIR_REL}/OIS.dll
-		DESTINATION bin
+		DESTINATION .
 		CONFIGURATIONS Release RelWithDebInfo
 		)
 	install(FILES
@@ -189,7 +189,7 @@ if (WIN32)
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/OIS_d.dll
-		DESTINATION bin
+		DESTINATION .
 		CONFIGURATIONS Debug
 		)
 # Doesn't seem to need these
@@ -197,13 +197,13 @@ if (WIN32)
 #	install(FILES
 #		${Boost_DATE_TIME_LIBRARY_RELEASE}
 #		${Boost_THREAD_LIBRARY_RELEASE}
-#		DESTINATION bin
+#		DESTINATION .
 #		CONFIGURATIONS Release RelWithDebInfo
 #		)
 #	install(FILES
 #		${Boost_DATE_TIME_LIBRARY_DEBUG}
 #		${Boost_THREAD_LIBRARY_DEBUG}
-#		DESTINATION bin
+#		DESTINATION .
 #		CONFIGURATIONS Debug
 #		)
 endif (WIN32)
@@ -211,7 +211,7 @@ endif (WIN32)
 if (UNIX)
 	install(TARGETS
 		${CMAKE_PROJECT_NAME}
-		RUNTIME DESTINATION bin
+		RUNTIME DESTINATION .
 		CONFIGURATIONS All
 		)
 	install(DIRECTORY
@@ -222,14 +222,14 @@ if (UNIX)
 	install(FILES
 		${CMAKE_SOURCE_DIR}/dist/bin/cfg-linux/plugins.cfg
 		${CMAKE_SOURCE_DIR}/dist/bin/resources.cfg
-		DESTINATION bin
+		DESTINATION .
 		CONFIGURATIONS Release RelWithDebInfo Debug
 		)
 # Linux builds aren't being distributed so let ogre find
 # the plugins with the config file
 #	install(FILES
 #		/usr/local/lib/OGRE/RenderSystem_GL.so
-#		DESTINATION bin
+#		DESTINATION .
 #		CONFIGURATIONS Release RelWithDebInfo
 #		)
 endif (UNIX)

@@ -2,6 +2,7 @@
 #include <list>
 #include <string>
 #include <utility>
+#include <stdarg.h>
 
 #include "EntityRegistry.h"
 
@@ -18,7 +19,7 @@ namespace Game {
 
 	class Entity {
 	public:
-		// Entity constructors can only take their vector position. Anything else has to be custom functions.
+		// Entity constructors take their params as a va_list
 		Entity();
 		~Entity() {};
 
@@ -27,7 +28,7 @@ namespace Game {
 		static Entity* deserialize(std::string data); // Deserialize the given string and return a pointer to a new entity
 
 		// Important functions
-		virtual void init() {}; // Anything that's not appropriate for the constructor
+		virtual void init(va_list l) {}; // Anything that's not appropriate for the constructor
 		virtual void think() {}; // Called every frame
 		virtual void render(bool inEditor) {}; // Called before a render so the entity can set up its render state
 

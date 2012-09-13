@@ -1,9 +1,7 @@
 
 
-#include "ConfigManager.h"
-#include "../logging/logging.h"
-
 #include <string>
+#include <vector>
 #include <iostream>
 #include <stdlib.h>
 #ifdef unix
@@ -18,43 +16,115 @@ namespace fs = boost::filesystem;
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#include "../logging/logging.h"
+#include "ConfigManager.h"
 
-ConfigManager::ConfigManager (int argc, char** argv)
+// Constructor
+ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
 {
+	m_save_on_destroy = save_on_destroy;
+	
 	// PARSE COMMAND LINE ARGUMENTS ///////////////////////////////////////////
 	if (argc>1) {
-		// EXPAND ALIASES
+		// TODO EXPAND ALIASES
 		// PARSE
 		po::options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "produce help message")
-			(",s", po::value<std::string>(), "override a setting")
+			("set,s", po::value<std::string>(), "override a configuration value")
 		;
 
+		INFO("Parsing command line parameters (may crash on duplicates)");
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 		po::notify(vm);
-
-		if (vm.count("help")) {
-			std::cout << desc << "\n";
-		}
-
+		
+		// Carry out commands
+		if (vm.count("help")) std::cout << desc << "\n";
 		if (vm.count("set")) {
-			std::cout << "set: " << vm["set"].as<std::string>() << ".\n";
+			PRINT("config param: " + vm["set"].as<std::string>());
+			set(vm["set"].as<std::string>(), std::string("on"));
 		}
 	}
+	
+	INFO("Loading configuration files");
+	load();
+	set("test:string","foo");
+	set("test:float", 3.14);
+	set("test:int", (long)42);
+	set("test:bool", true);
+	
+	m_p.report();
+	m_d.report();
+}
+// Destructor
+ConfigManager::~ConfigManager () {
+	if (m_save_on_destroy) {
+		try {
+			INFO("Automatically saving configuration files");
+			save();
+		} catch (std::runtime_error e) {
+			WARNING(std::string("Error saving configuration files: ") + e.what());
+		}
+	}
+}
+
+
+
+void ConfigManager::set (std::string key, std::string value) {
+	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_STRING);
+}
+void ConfigManager::set (std::string key, double value) {
+	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_FLOAT);
+}
+void ConfigManager::set (std::string key, long value) {
+	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_INT);
+}
+void ConfigManager::set (std::string key, bool value) {
+	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_BOOL);
+}
+
+
+
+std::string ConfigManager::get (std::string key) {
+	try { return m_p.get(key); }
+	catch (std::runtime_error) { return m_d.get(key); }
+}
+void ConfigManager::load ()
+{
+	// TODO Determine the correct folder to load settings from
 	
 	// Set the user's home folder
 	m_home_is_good = false;
 	try {
-		m_home = getHomeFolder();
+		m_home = _getHomeFolder();
 		if (fs::is_directory(m_home)) m_home_is_good = true;
 		else throw std::runtime_error("Home folder doesn't exist: \"" + m_home + "\"");
 	} catch (std::runtime_error& e) { WARNING(e.what()); }
+	m_d.load(".");
+}
+void ConfigManager::save ()
+{
+	// TODO Determine the correct folder to save settings to and write them
+	
+	// Set the user's home folder
+	m_home_is_good = false;
+	try {
+		m_home = _getHomeFolder();
+		if (fs::is_directory(m_home)) m_home_is_good = true;
+		else throw std::runtime_error("Home folder doesn't exist: \"" + m_home + "\"");
+	} catch (std::runtime_error& e) { WARNING(e.what()); }
+	m_d.save(".");
 }
 
-std::string ConfigManager::getHomeFolder ()
-{
+
+// INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
+
+void ConfigManager::_set (std::string key, ETFDocument::etfvalue value, ETFDocument::DataType type) {
+	m_p.remove(key, type);
+	m_d.set(key, value, type);
+}
+std::string ConfigManager::_getHomeFolder () {
 #ifdef _WIN32
 	// Combine environment variables
 	const char* str1 = getenv("HOMEDRIVE");

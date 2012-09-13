@@ -6,6 +6,7 @@
 #include <utility>
 #include <ostream>
 
+#include <boost/variant.hpp>
 #include <boost/variant/recursive_variant.hpp>
 
 class ETFDocument {

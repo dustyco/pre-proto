@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#define POSIX
+
 using namespace Logging;
 
 enum ColorAttribute {
