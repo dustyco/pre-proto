@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <math.h>
 #include <stdlib.h>
 #ifdef unix
 	#include <string.h>
@@ -18,6 +19,7 @@ namespace po = boost::program_options;
 
 #include "../logging/logging.h"
 #include "ConfigManager.h"
+
 
 // Constructor
 ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
@@ -36,8 +38,10 @@ ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
 
 		INFO("Parsing command line parameters (may crash on duplicates)");
 		po::variables_map vm;
-		po::store(po::parse_command_line(argc, argv, desc), vm);
-		po::notify(vm);
+		try {
+			po::store(po::parse_command_line(argc, argv, desc), vm);
+			po::notify(vm);
+		} catch (std::exception e) { WARNING("Crashed (on duplicates)"); }
 		
 		// Carry out commands
 		if (vm.count("help")) std::cout << desc << "\n";
@@ -49,19 +53,34 @@ ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
 	
 	INFO("Loading configuration files");
 	load();
-	set("test:string","foo");
-	set("test:float", 3.14);
-	set("test:int", (long)42);
-	set("test:bool", true);
-	
-	m_p.report();
+	set("test_set:value", 5l);           m_d.report();
+	set("test_set:value/overwrite", 6l); m_d.report();
+	set("test_set:value", 7l);           m_d.report();
+	set("test_set:sub1/sub2/string1", std::string("foo"));
+	set("test_set:sub1/sub2/string2", "bar");
+	set("test_set:sub1/sub2/float", 3.14);
+	set("test_set:sub1/sub2/int", 42L);
+	set("test_set:sub1/sub2/bool", false);
+	set(":blank", 13l);
+	set("alone", 14l);
+	set("sub1/sub2", 15l);
 	m_d.report();
+	std::cout << "getFloat(\"test_set:sub1/sub2/float\") = " << getFloat("test_set:sub1/sub2/float") << "\n";
+	std::cout << "getInt(\"test_set:sub1/sub2/float\") = " << getInt("test_set:sub1/sub2/float") << "\n"; // Check conversion
+	std::cout << "getBool(\"test_set:sub1/sub2/float\", true) = " << getBool("test_set:sub1/sub2/float", true) << "\n"; // Fails with the non-default version
+	std::cout << "getBool(\"test_set:sub1/sub2/float\") = " << getBool("test_set:sub1/sub2/float") << "\n"; // Check that it's been applied
+	try { getString("fake/entry"); }
+	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
+	
+	
 }
 // Destructor
 ConfigManager::~ConfigManager () {
 	if (m_save_on_destroy) {
 		try {
 			INFO("Automatically saving configuration files");
+			m_p.report();
+			m_d.report();
 			save();
 		} catch (std::runtime_error e) {
 			WARNING(std::string("Error saving configuration files: ") + e.what());
@@ -72,24 +91,88 @@ ConfigManager::~ConfigManager () {
 
 
 void ConfigManager::set (std::string key, std::string value) {
-	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_STRING);
+	_set(key, ETFDocument::etfnode(value));
+}
+void ConfigManager::set (std::string key, const char* value) {
+	_set(key, ETFDocument::etfnode(std::string(value)));
 }
 void ConfigManager::set (std::string key, double value) {
-	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_FLOAT);
+	_set(key, ETFDocument::etfnode(value));
 }
 void ConfigManager::set (std::string key, long value) {
-	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_INT);
+	_set(key, ETFDocument::etfnode(value));
 }
 void ConfigManager::set (std::string key, bool value) {
-	_set(key, ETFDocument::etfvalue(value), ETFDocument::DT_BOOL);
+	_set(key, ETFDocument::etfnode(value));
 }
 
 
-
-std::string ConfigManager::get (std::string key) {
-	try { return m_p.get(key); }
-	catch (std::runtime_error) { return m_d.get(key); }
+std::string ConfigManager::getString (std::string key, std::string default_value) {
+	try { return getString(key); }
+	catch (std::runtime_error) { set(key, default_value); return default_value; }
 }
+double ConfigManager::getFloat (std::string key, double default_value) {
+	try { return getFloat(key); }
+	catch (std::runtime_error) { set(key, default_value); return default_value; }
+}
+long ConfigManager::getInt (std::string key, long default_value) {
+	try { return getInt(key); }
+	catch (std::runtime_error) { set(key, default_value); return default_value; }
+}
+bool ConfigManager::getBool (std::string key, bool default_value) {
+	try { return getBool(key); }
+	catch (std::runtime_error) { set(key, default_value); return default_value; }
+}
+
+
+std::string ConfigManager::getString (std::string key) {
+	ETFDocument::etfnode node = _get(key);
+	switch (node.type) {
+		case ETFDocument::DT_STRING:
+			return boost::get<std::string>(node.value); break;
+		default:
+			throw std::runtime_error("Incorrect type"); break;
+	}
+}
+double ConfigManager::getFloat (std::string key) {
+	ETFDocument::etfnode node = _get(key);
+	switch (node.type) {
+		case ETFDocument::DT_FLOAT:
+			return boost::get<double>(node.value); break;
+		case ETFDocument::DT_INT:
+			return boost::get<long>(node.value); break;
+		default:
+			throw std::runtime_error("Incorrect type"); break;
+	}
+}
+long ConfigManager::getInt (std::string key) {
+	ETFDocument::etfnode node = _get(key);
+	switch (node.type) {
+		case ETFDocument::DT_INT:
+			return boost::get<long>(node.value); break;
+		case ETFDocument::DT_FLOAT:
+			return floor(boost::get<double>(node.value) + 0.5); break;
+		default:
+			throw std::runtime_error("Incorrect type"); break;
+	}
+}
+bool ConfigManager::getBool (std::string key) {
+	ETFDocument::etfnode node = _get(key);
+	switch (node.type) {
+		case ETFDocument::DT_BOOL:
+			return boost::get<bool>(node.value); break;
+		default:
+			throw std::runtime_error("Incorrect type"); break;
+	}
+}
+
+
+void ConfigManager::remove (std::string key) {
+	m_p.remove(key);
+	m_d.remove(key);
+}
+
+
 void ConfigManager::load ()
 {
 	// TODO Determine the correct folder to load settings from
@@ -120,10 +203,16 @@ void ConfigManager::save ()
 
 // INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
 
-void ConfigManager::_set (std::string key, ETFDocument::etfvalue value, ETFDocument::DataType type) {
-	m_p.remove(key, type);
-	m_d.set(key, value, type);
+void ConfigManager::_set (std::string key, ETFDocument::etfnode value) {
+	m_p.remove(key);
+	m_d.set(key, value);
 }
+ETFDocument::etfnode ConfigManager::_get (std::string key) {
+	try { return m_p.get(key); }
+	catch (std::runtime_error) { return m_d.get(key); }
+}
+
+
 std::string ConfigManager::_getHomeFolder () {
 #ifdef _WIN32
 	// Combine environment variables
