@@ -59,5 +59,5 @@ int Application::run () {
 
 void Application::shutdown () {
 	m_root->shutdown();
-	PRINT("Proto shut down. Thanks for playing!");
+	PRINT("Get me those Chinese language files I asked for. End of line.");
 }
