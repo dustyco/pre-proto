@@ -9,7 +9,8 @@ namespace Logging {
 		WARNING=2,
 		ERROR=3,
 		CRITICAL=4,
-		PRINT=5
+		PRINT=5,
+		TELETYPE=6
 	};
 
 	// Abstract base class of all logger objects

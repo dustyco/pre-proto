@@ -1,5 +1,6 @@
 #include "ConsoleLogger.h"
 #include <cstdio>
+#include "../util/util.h"
 #include <cstdlib>
 
 #define POSIX
@@ -24,11 +25,19 @@ enum Color {
 	BLUE=4,
 	MAGENTA=5,
 	CYAN=6,
-	WHITE=7
+	WHITE=7,
 };
 
 void setColor(Color fg, Color bg, ColorAttribute attr) {
 	fprintf(stdout, "%c[%d;%d;%dm", 0x1B, attr, fg+30, bg+40);
+}
+
+void setColor(Color fg, ColorAttribute attr) {
+	fprintf(stdout, "%c[%d;%dm", 0x1B, attr, fg+30);
+}
+
+void resetColor() {
+	fprintf(stdout, "%c[%dm", 0x1B, 0);
 }
 
 ConsoleLogger::ConsoleLogger() {
@@ -51,7 +60,24 @@ void ConsoleLogger::logMessage(LogLevel lvl, std::string message) {
 		else if(lvl == WARNING) fg = YELLOW;
 		else if(lvl == ERROR) fg = MAGENTA;
 		else if(lvl == CRITICAL) fg = RED;
-		setColor(fg, BLACK, BRIGHT);
+		else if(lvl == TELETYPE) fg = GREEN;
+		setColor(fg, BRIGHT);
+	}
+
+	if(lvl == TELETYPE) {
+		setColor(GREEN, BLACK, BRIGHT);
+		char* msgChars = (char*)message.c_str();
+		char* ptr = msgChars;
+		for(;*ptr != 0;ptr++) {
+			printf("%c", *ptr);
+			fflush(stdout);
+			tsleep(0.02);
+		}
+		printf("\n");
+		fflush(stdout);
+		tsleep(0.1);
+		resetColor();
+		return;
 	}
 
 	// Get the level name
@@ -68,8 +94,10 @@ void ConsoleLogger::logMessage(LogLevel lvl, std::string message) {
 	time_t now;
 	time(&now);
 	struct tm *localNow = localtime(&now);
-	strftime(timeBuf, 64, "%m/%d/%Y-%I:%M:%S %p", localNow);
+	// Big endian date format
+	// tone it down for now
+	strftime(timeBuf, 64, "%I:%M:%S %p", localNow);
 
-	printf("[%8s] [%s] %s\n", levelName, timeBuf, message.c_str());
+	printf("[%8s %s] %s\n", levelName, timeBuf, message.c_str());
 }
 

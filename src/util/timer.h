@@ -12,3 +12,5 @@ private:
 	boost::chrono::steady_clock::time_point m_start;
 	bool m_autoReset;
 };
+
+void tsleep(double secs);
