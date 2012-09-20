@@ -23,7 +23,6 @@ void ConfigManager::Tree::set (std::string key, ETFDocument::etfnode value)
 	
 		// Step down the nodes to find the leaf
 		typedef std::map<std::string, ETFDocument::etfnode> etfmap;
-//		std::cout << &node << ": " << file << "\n";
 		for (strings::iterator s=subs.begin(); s!=subs.end(); s++) {
 			if (node->type != ETFDocument::DT_MAP) {
 				// Node isn't a map - convert it
@@ -31,7 +30,6 @@ void ConfigManager::Tree::set (std::string key, ETFDocument::etfnode value)
 				node->type = ETFDocument::DT_MAP;
 			}
 			node = &(boost::get<etfmap>(node->value)[*s]);
-//			std::cout << node << ": " << *s << "\n";
 		}
 		node->value = value.value;
 		node->type = value.type;
@@ -41,27 +39,26 @@ void ConfigManager::Tree::set (std::string key, ETFDocument::etfnode value)
 
 ETFDocument::etfnode ConfigManager::Tree::get (std::string key)
 {
-	try {
-		// Parse the key string
-		std::string file;
-		typedef std::list<std::string> strings;
-		strings subs;
-		_doKey(key, file, subs);
-	
-		// Select the appropriate ETFDocument
-		typedef std::map<std::string, ETFDocument::etfnode> etfmap;
-		std::map<std::string, ETFDocument>::iterator doc = m_docs.find(file);
-		if (doc == m_docs.end()) throw std::runtime_error("File doesn't exist: \"" + file + "\"\n");
-		ETFDocument::etfnode* node = &((*doc).second.getRoot());
-	
-		// Step down the nodes to find the leaf
-		for (strings::iterator s=subs.begin(); s!=subs.end(); s++) {
-			etfmap::iterator it = (boost::get<etfmap>(node->value)).find(*s);
-			if (it == boost::get<etfmap>(node->value).end()) throw std::runtime_error("Entry doesn't exist: \"" + key + "\"");
-			node = &((*it).second);
-		}
-		return *node;
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get config entry: ") + e.what()); }
+	// Parse the key string
+	std::string file;
+	typedef std::list<std::string> strings;
+	strings subs;
+	_doKey(key, file, subs);
+
+	// Select the appropriate ETFDocument
+	typedef std::map<std::string, ETFDocument::etfnode> etfmap;
+	std::map<std::string, ETFDocument>::iterator doc = m_docs.find(file);
+	if (doc == m_docs.end()) throw std::runtime_error("File doesn't exist: \"" + file + "\"\n");
+	ETFDocument::etfnode* node = &((*doc).second.getRoot());
+
+	// Step down the nodes to find the leaf
+	for (strings::iterator s=subs.begin(); s!=subs.end(); s++) {
+		if (node->type != ETFDocument::DT_MAP) throw std::runtime_error("Entry doesn't exist: \"" + key + "\"");
+		etfmap::iterator it = (boost::get<etfmap>(node->value)).find(*s);
+		if (it == boost::get<etfmap>(node->value).end()) throw std::runtime_error("Entry doesn't exist: \"" + key + "\"");
+		node = &((*it).second);
+	}
+	return *node;
 }
 
 
@@ -72,6 +69,8 @@ void ConfigManager::Tree::remove (std::string key) {
 		typedef std::list<std::string> strings;
 		strings subs;
 		_doKey(key, file, subs);
+		if (subs.size()<1) return;
+		std::string leaf = subs.back(); subs.pop_back();
 	
 		// Select the appropriate ETFDocument
 		typedef std::map<std::string, ETFDocument::etfnode> etfmap;
@@ -79,13 +78,44 @@ void ConfigManager::Tree::remove (std::string key) {
 		if (doc == m_docs.end()) return;
 		ETFDocument::etfnode* node = &((*doc).second.getRoot());
 	
-		// Step down the nodes to find the leaf
-		for (strings::iterator s=subs.begin(); s!=subs.end(); s++) {
-			etfmap::iterator it = (boost::get<etfmap>(node->value)).find(*s);
-			if (it == boost::get<etfmap>(node->value).end()) throw std::runtime_error("Entry doesn't exist: \"" + key + "\"");
+		// Step down the nodes to find the map just before the leaf
+		etfmap::iterator it;
+		for (strings::iterator s=subs.begin(),end = subs.end(); s!=end; s++) {
+			if (node->type != ETFDocument::DT_MAP) return;
+			etfmap& map = boost::get<etfmap>(node->value);
+			it = map.find(*s);
+			if (it == map.end()) return;
 			node = &((*it).second);
 		}
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get config entry: ") + e.what()); }
+		if (node->type != ETFDocument::DT_MAP) return;
+		etfmap& map = boost::get<etfmap>(node->value);
+		it = map.find(leaf);
+		if (it == map.end()) return;
+		map.erase(it);
+		_clean();
+	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to remove config entry: ") + e.what()); }
+}
+
+// Remove empty maps from each file
+void ConfigManager::Tree::_clean () {
+	typedef std::map<std::string, ETFDocument> docmap;
+	for (docmap::iterator doc = m_docs.begin(); doc!=m_docs.end(); doc++)
+		_clean_node((*doc).second.getRoot());
+}
+// Returns true if the node is empty and can be removed
+bool ConfigManager::Tree::_clean_node (ETFDocument::etfnode& node) {
+	if (node.type == ETFDocument::DT_MAP) {
+		typedef std::map<std::string, ETFDocument::etfnode> etfmap;
+		etfmap& map = boost::get<etfmap>(node.value);
+		if (map.empty()) return true;
+		etfmap::iterator it = map.begin();
+		while (it != map.end()) {
+			if (_clean_node((*it).second)) map.erase(it++);
+			else it++;
+			if (map.empty()) return true;
+		}
+	}
+	return false;
 }
 
 
@@ -95,11 +125,13 @@ void ConfigManager::Tree::load (std::string path)
 		// TODO Load all config files from this folder into separate ETFDocuments
 //		typedef std::map<std::string, ETFDocument> docmap;
 //		m_docs["test_parse"] = ETFDocument("hello=1;test=\"test2\"");
+		_clean();
 	} catch (std::runtime_error e) {
 		WARNING(e.what());
 	}
 }
 void ConfigManager::Tree::save (std::string path) {
+	_clean();
 	typedef std::map<std::string, ETFDocument> docmap;
 	for (docmap::iterator it = m_docs.begin(); it!=m_docs.end(); it++) {
 		std::string filename = path + "/" + (*it).first + "." + CONFIG_FILE_EXT;
@@ -115,14 +147,16 @@ void ConfigManager::Tree::report () {
 	typedef std::map<std::string, ETFDocument> docmap;
 	for (docmap::iterator doc = m_docs.begin(); doc!=m_docs.end(); doc++) {
 		std::cout << (*doc).first + "\n";
-		_recurse((*doc).second.getRoot(), std::string(""));
+		_report_node((*doc).second.getRoot(), std::string(""));
 	}
 }
-void ConfigManager::Tree::_recurse (ETFDocument::etfnode& node, std::string path) {
+void ConfigManager::Tree::_report_node (ETFDocument::etfnode& node, std::string path) {
 	if (node.type == ETFDocument::DT_MAP) {
-		typedef std::map<std::string, ETFDocument::etfnode> nodemap;
-		for (nodemap::iterator it = boost::get<nodemap>(node.value).begin(); it!=boost::get<nodemap>(node.value).end(); it++)
-			_recurse((*it).second, path + "/" + (*it).first);
+		typedef std::map<std::string, ETFDocument::etfnode> etfmap;
+		etfmap& map = boost::get<etfmap>(node.value);
+		if (map.empty()) std::cout << "\t" << path << "/\n";
+		else for (etfmap::iterator it = map.begin(); it!=map.end(); it++)
+			_report_node((*it).second, path + "/" + (*it).first);
 	} else {
 		switch (node.type) {
 			case ETFDocument::DT_STRING:
@@ -137,6 +171,7 @@ void ConfigManager::Tree::_recurse (ETFDocument::etfnode& node, std::string path
 			case ETFDocument::DT_BOOL:
 				std::cout << "\t" << path << " = " << (boost::get<bool>(node.value)?"true":"false") << "\n";
 				break;
+			default: break;
 		}
 	}
 }
@@ -144,7 +179,7 @@ void ConfigManager::Tree::_recurse (ETFDocument::etfnode& node, std::string path
 
 // INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
 
-// Break a config key up into tokens for parsing
+// Splits a string on a given delimiter, includes blank tokens
 std::list<std::string> ConfigManager::Tree::_split (std::string key, std::string delimiter) {
 	typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
 	boost::char_separator<char> delim(delimiter.c_str(), "", boost::keep_empty_tokens);

@@ -223,11 +223,11 @@ void dumpNode(std::ostream &s, etfnode& n, unsigned int indent) {
 		case ETFDocument::DT_INT:
 			s << boost::get<long>(n.value); break;
 		case ETFDocument::DT_STRING:
-			s << boost::get<std::string>(n.value); break;
+			s << "\"" << boost::get<std::string>(n.value) << "\""; break;
 		case ETFDocument::DT_FLOAT:
 			s << boost::get<double>(n.value); break;
 		case ETFDocument::DT_BOOL:
-			s << (boost::get<bool>(n.value)) ? ("true") : ("false"); break;
+			s << ((boost::get<bool>(n.value)) ? ("true") : ("false")); break;
 		case ETFDocument::DT_LIST:
 			dumpList(s, n, indent); break;
 		case ETFDocument::DT_PAIR:

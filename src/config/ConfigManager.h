@@ -59,9 +59,11 @@ private:
 		void                   load     (std::string path);
 		void                   save     (std::string path);
 		void                   report   ();
-		void                   _recurse (ETFDocument::etfnode& node, std::string path);
-		std::list<std::string> _split   (std::string key, std::string delimiter);
-		void                   _doKey   (std::string key, std::string& file, std::list<std::string>& subs);
+		void                   _clean       ();
+		bool                   _clean_node  (ETFDocument::etfnode& node);
+		void                   _report_node (ETFDocument::etfnode& node, std::string path);
+		std::list<std::string> _split       (std::string key, std::string delimiter);
+		void                   _doKey       (std::string key, std::string& file, std::list<std::string>& subs);
 		
 		std::map<std::string, ETFDocument> m_docs;
 	};

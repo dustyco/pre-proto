@@ -47,43 +47,92 @@ ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
 		if (vm.count("help")) std::cout << desc << "\n";
 		if (vm.count("set")) {
 			PRINT("config param: " + vm["set"].as<std::string>());
-			set(vm["set"].as<std::string>(), std::string("on"));
+			m_p.set(vm["set"].as<std::string>(), ETFDocument::etfnode(std::string("on")));
 		}
 	}
+/*			CRITICAL("// REPORT: after parameters ///////////////////////////////////////");
+			WARNING("parameters:");
+			m_p.report();
+			WARNING("directory:");
+			m_d.report();
+			CRITICAL("///////////////////////////////////////////////////////////////////");
 	
 	INFO("Loading configuration files");
 	load();
-	set("test_set:value", 5l);           m_d.report();
-	set("test_set:value/overwrite", 6l); m_d.report();
-	set("test_set:value", 7l);           m_d.report();
+	INFO("Testing section");
+	set("test_set:value", 5l);
+	set("test_set:value/overwrite", 6l);
+	set("test_set:value", 7l);
 	set("test_set:sub1/sub2/string1", std::string("foo"));
 	set("test_set:sub1/sub2/string2", "bar");
 	set("test_set:sub1/sub2/float", 3.14);
 	set("test_set:sub1/sub2/int", 42L);
 	set("test_set:sub1/sub2/bool", false);
-	set(":blank", 13l);
-	set("alone", 14l);
+	set(":just_colon", 13l);
+	set("no_colon", 14l);
 	set("sub1/sub2", 15l);
-	m_d.report();
+	set("sub1/sub3/sub4", 16l);
+	set("sub1/sub3/sub5", 17l);
+			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
+			WARNING("parameters:");
+			m_p.report();
+			WARNING("directory:");
+			m_d.report();
+			CRITICAL("///////////////////////////////////////////////////////////////////");
 	std::cout << "getFloat(\"test_set:sub1/sub2/float\") = " << getFloat("test_set:sub1/sub2/float") << "\n";
 	std::cout << "getInt(\"test_set:sub1/sub2/float\") = " << getInt("test_set:sub1/sub2/float") << "\n"; // Check conversion
 	std::cout << "getBool(\"test_set:sub1/sub2/float\", true) = " << getBool("test_set:sub1/sub2/float", true) << "\n"; // Fails with the non-default version
 	std::cout << "getBool(\"test_set:sub1/sub2/float\") = " << getBool("test_set:sub1/sub2/float") << "\n"; // Check that it's been applied
+	try { getString("sub1"); }
+	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
+	try { getString("blank/extra"); }
+	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
 	try { getString("fake/entry"); }
 	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
-	
+*/	
+/*			CRITICAL("// REPORT: before set ////////////////////////////////////////////");
+			WARNING("parameters:");
+			m_p.report();
+			WARNING("directory:");
+			m_d.report();
+			CRITICAL("///////////////////////////////////////////////////////////////////");
+	set("try/to/remove", 42l);
+			CRITICAL("// REPORT: before removal /////////////////////////////////////////");
+			WARNING("parameters:");
+			m_p.report();
+			WARNING("directory:");
+			m_d.report();
+			CRITICAL("///////////////////////////////////////////////////////////////////");
+	remove("try/to/remove");
+			CRITICAL("// REPORT: after removal //////////////////////////////////////////");
+			WARNING("parameters:");
+			m_p.report();
+			WARNING("directory:");
+			m_d.report();
+			CRITICAL("///////////////////////////////////////////////////////////////////");
+*/	
+/*	PRINT("print");
+	INFO("info");
+	DEBUG("debug");
+	WARNING("warning");
+	ERROR("error");
+	CRITICAL("critical");
+*/	
 	
 }
-// Destructor
 ConfigManager::~ConfigManager () {
 	if (m_save_on_destroy) {
 		try {
 			INFO("Automatically saving configuration files");
+			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
+			WARNING("parameters:");
 			m_p.report();
+			WARNING("directory:");
 			m_d.report();
+			CRITICAL("///////////////////////////////////////////////////////////////////");
 			save();
 		} catch (std::runtime_error e) {
-			WARNING(std::string("Error saving configuration files: ") + e.what());
+			WARNING(std::string("Failed to save configuration files: ") + e.what());
 		}
 	}
 }
@@ -126,44 +175,52 @@ bool ConfigManager::getBool (std::string key, bool default_value) {
 
 
 std::string ConfigManager::getString (std::string key) {
-	ETFDocument::etfnode node = _get(key);
-	switch (node.type) {
-		case ETFDocument::DT_STRING:
-			return boost::get<std::string>(node.value); break;
-		default:
-			throw std::runtime_error("Incorrect type"); break;
-	}
+	try {
+		ETFDocument::etfnode node = _get(key);
+		switch (node.type) {
+			case ETFDocument::DT_STRING:
+				return boost::get<std::string>(node.value); break;
+			default:
+				throw std::runtime_error("Incorrect type"); break;
+		}
+	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get string: ") + e.what()); }
 }
 double ConfigManager::getFloat (std::string key) {
-	ETFDocument::etfnode node = _get(key);
-	switch (node.type) {
-		case ETFDocument::DT_FLOAT:
-			return boost::get<double>(node.value); break;
-		case ETFDocument::DT_INT:
-			return boost::get<long>(node.value); break;
-		default:
-			throw std::runtime_error("Incorrect type"); break;
-	}
+	try {
+		ETFDocument::etfnode node = _get(key);
+		switch (node.type) {
+			case ETFDocument::DT_FLOAT:
+				return boost::get<double>(node.value); break;
+			case ETFDocument::DT_INT:
+				return boost::get<long>(node.value); break;
+			default:
+				throw std::runtime_error("Incorrect type"); break;
+		}
+	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get float: ") + e.what()); }
 }
 long ConfigManager::getInt (std::string key) {
-	ETFDocument::etfnode node = _get(key);
-	switch (node.type) {
-		case ETFDocument::DT_INT:
-			return boost::get<long>(node.value); break;
-		case ETFDocument::DT_FLOAT:
-			return floor(boost::get<double>(node.value) + 0.5); break;
-		default:
-			throw std::runtime_error("Incorrect type"); break;
-	}
+	try {
+		ETFDocument::etfnode node = _get(key);
+		switch (node.type) {
+			case ETFDocument::DT_INT:
+				return boost::get<long>(node.value); break;
+			case ETFDocument::DT_FLOAT:
+				return floor(boost::get<double>(node.value) + 0.5); break;
+			default:
+				throw std::runtime_error("Incorrect type"); break;
+		}
+	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get int: ") + e.what()); }
 }
 bool ConfigManager::getBool (std::string key) {
-	ETFDocument::etfnode node = _get(key);
-	switch (node.type) {
-		case ETFDocument::DT_BOOL:
-			return boost::get<bool>(node.value); break;
-		default:
-			throw std::runtime_error("Incorrect type"); break;
-	}
+	try {
+		ETFDocument::etfnode node = _get(key);
+		switch (node.type) {
+			case ETFDocument::DT_BOOL:
+				return boost::get<bool>(node.value); break;
+			default:
+				throw std::runtime_error("Incorrect type"); break;
+		}
+	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get bool: ") + e.what()); }
 }
 
 
