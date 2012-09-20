@@ -49,7 +49,7 @@ ConsoleLogger::ConsoleLogger() {
 }
 
 ConsoleLogger::~ConsoleLogger() {
-	if(m_colors) setColor(WHITE, BLACK, RESET);
+	if(m_colors) resetColor();
 }
 
 void ConsoleLogger::logMessage(LogLevel lvl, std::string message) {
@@ -71,11 +71,11 @@ void ConsoleLogger::logMessage(LogLevel lvl, std::string message) {
 		for(;*ptr != 0;ptr++) {
 			printf("%c", *ptr);
 			fflush(stdout);
-			tsleep(0.02);
+			//tsleep(0.01);
 		}
 		printf("\n");
 		fflush(stdout);
-		tsleep(0.1);
+		//tsleep(0.1);
 		resetColor();
 		return;
 	}

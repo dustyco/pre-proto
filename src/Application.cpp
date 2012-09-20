@@ -59,6 +59,6 @@ int Application::run () {
 
 void Application::shutdown () {
 	m_root->shutdown();
-	LOG(Logging::TELETYPE, "Get me those Chinese language files I asked for.");
-	LOG(Logging::TELETYPE, "End of line.");
+	LOG(Logging::TELETYPE, "GET ME THOSE CHINESE LANGUAGE FILES I ASKED FOR.");
+	LOG(Logging::TELETYPE, "END OF LINE.");
 }
