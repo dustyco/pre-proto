@@ -62,8 +62,13 @@ int Application::run () {
 
 void Application::shutdown () {
 	m_root->shutdown();
+<<<<<<< HEAD
 	delete m_config;
 	
 	LOG(Logging::TELETYPE, "Get me those Chinese language files I asked for.");
 	LOG(Logging::TELETYPE, "End of line.");
+=======
+	LOG(Logging::TELETYPE, "GET ME THOSE CHINESE LANGUAGE FILES I ASKED FOR.");
+	LOG(Logging::TELETYPE, "END OF LINE.");
+>>>>>>> d4163ebf3a4fc119b77a3e1582f14ee50454c801
 }
