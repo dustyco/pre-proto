@@ -1,4 +1,5 @@
 #include "timer.h"
+#include <boost/thread.hpp>
 
 typedef boost::chrono::duration<double> dsec;
 
@@ -20,4 +21,8 @@ double timer::read() {
 
 void timer::resetTime() {
 	m_start = boost::chrono::steady_clock::now();
+}
+
+void tsleep(double secs) {
+	boost::this_thread::sleep_for(boost::chrono::duration<double>(secs));
 }

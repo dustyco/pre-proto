@@ -8,13 +8,18 @@
 
 #include "etf.h"
 
-#define CONFIG_FILE_EXT "cfg"
+#ifdef _WIN32
+	#define CONFIG_FOLDER "proto"
+#else
+	#define CONFIG_FOLDER ".proto"
+#endif
 #define CONFIG_FILE_DEFAULT "proto"
+#define CONFIG_FILE_EXT "cfg"
 
 
 class ConfigManager {
 public:
-	ConfigManager (int argc, char** argv, bool save_on_destroy = true);
+	ConfigManager (int argc, char** argv);
 	~ConfigManager ();
 	
 	// Throws std::runtime_error if:
@@ -68,15 +73,15 @@ private:
 		std::map<std::string, ETFDocument> m_docs;
 	};
 	
-	std::string          _getHomeFolder ();
+	std::string          _getUserFolder ();
+	void                 _prepFolder (std::string path, char mode);
 	void                 _set (std::string key, ETFDocument::etfnode value);
 	ETFDocument::etfnode _get (std::string key);
 	
 	Tree        m_p;
 	Tree        m_d;
 	bool        m_save_on_destroy;
-	bool        m_home_is_good;
-	std::string m_home;
+	bool        m_user_before_game;
 };
 
 

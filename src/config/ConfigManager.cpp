@@ -1,12 +1,11 @@
 
 
-#include <string>
 #include <vector>
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef unix
-	#include <string.h>
 	#include <unistd.h>
 	#include <pwd.h>
 #endif
@@ -21,15 +20,20 @@ namespace po = boost::program_options;
 #include "ConfigManager.h"
 
 
-// Constructor
-ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
+ConfigManager::ConfigManager (int argc, char** argv)
 {
-	m_save_on_destroy = save_on_destroy;
+	m_save_on_destroy = true;
+	#ifdef _WIN32
+		m_user_before_game = false;
+	#else
+		m_user_before_game = true;
+	#endif
 	
 	// PARSE COMMAND LINE ARGUMENTS ///////////////////////////////////////////
-	if (argc>1) {
+/*	if (argc>1) {
 		// TODO EXPAND ALIASES
 		// PARSE
+		// TODO Fix duplicate flag crash
 		po::options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "produce help message")
@@ -50,91 +54,81 @@ ConfigManager::ConfigManager (int argc, char** argv, bool save_on_destroy)
 			m_p.set(vm["set"].as<std::string>(), ETFDocument::etfnode(std::string("on")));
 		}
 	}
-/*			CRITICAL("// REPORT: after parameters ///////////////////////////////////////");
-			WARNING("parameters:");
-			m_p.report();
-			WARNING("directory:");
-			m_d.report();
-			CRITICAL("///////////////////////////////////////////////////////////////////");
-	
-	INFO("Loading configuration files");
+*/
 	load();
-	INFO("Testing section");
-	set("test_set:value", 5l);
-	set("test_set:value/overwrite", 6l);
-	set("test_set:value", 7l);
-	set("test_set:sub1/sub2/string1", std::string("foo"));
-	set("test_set:sub1/sub2/string2", "bar");
-	set("test_set:sub1/sub2/float", 3.14);
-	set("test_set:sub1/sub2/int", 42L);
-	set("test_set:sub1/sub2/bool", false);
-	set(":just_colon", 13l);
-	set("no_colon", 14l);
-	set("sub1/sub2", 15l);
-	set("sub1/sub3/sub4", 16l);
-	set("sub1/sub3/sub5", 17l);
-			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
-			WARNING("parameters:");
-			m_p.report();
-			WARNING("directory:");
-			m_d.report();
-			CRITICAL("///////////////////////////////////////////////////////////////////");
-	std::cout << "getFloat(\"test_set:sub1/sub2/float\") = " << getFloat("test_set:sub1/sub2/float") << "\n";
-	std::cout << "getInt(\"test_set:sub1/sub2/float\") = " << getInt("test_set:sub1/sub2/float") << "\n"; // Check conversion
-	std::cout << "getBool(\"test_set:sub1/sub2/float\", true) = " << getBool("test_set:sub1/sub2/float", true) << "\n"; // Fails with the non-default version
-	std::cout << "getBool(\"test_set:sub1/sub2/float\") = " << getBool("test_set:sub1/sub2/float") << "\n"; // Check that it's been applied
-	try { getString("sub1"); }
-	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
-	try { getString("blank/extra"); }
-	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
-	try { getString("fake/entry"); }
-	catch (std::runtime_error e) { std::cout << "test: " << e.what() << "\n"; }
-*/	
-/*			CRITICAL("// REPORT: before set ////////////////////////////////////////////");
-			WARNING("parameters:");
-			m_p.report();
-			WARNING("directory:");
-			m_d.report();
-			CRITICAL("///////////////////////////////////////////////////////////////////");
-	set("try/to/remove", 42l);
-			CRITICAL("// REPORT: before removal /////////////////////////////////////////");
-			WARNING("parameters:");
-			m_p.report();
-			WARNING("directory:");
-			m_d.report();
-			CRITICAL("///////////////////////////////////////////////////////////////////");
-	remove("try/to/remove");
-			CRITICAL("// REPORT: after removal //////////////////////////////////////////");
-			WARNING("parameters:");
-			m_p.report();
-			WARNING("directory:");
-			m_d.report();
-			CRITICAL("///////////////////////////////////////////////////////////////////");
-*/	
-/*	PRINT("print");
-	INFO("info");
-	DEBUG("debug");
-	WARNING("warning");
-	ERROR("error");
-	CRITICAL("critical");
-*/	
-	
 }
-ConfigManager::~ConfigManager () {
+ConfigManager::~ConfigManager ()
+{
 	if (m_save_on_destroy) {
 		try {
 			INFO("Automatically saving configuration files");
-			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
+/*			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
 			WARNING("parameters:");
 			m_p.report();
 			WARNING("directory:");
 			m_d.report();
 			CRITICAL("///////////////////////////////////////////////////////////////////");
-			save();
+*/			save();
 		} catch (std::runtime_error e) {
 			WARNING(std::string("Failed to save configuration files: ") + e.what());
 		}
 	}
+}
+
+
+void ConfigManager::load ()
+{
+	// Clear any existing settings
+	m_p = Tree();
+	m_p = Tree();
+	
+	std::string dir(".");
+	if (m_user_before_game) {
+		try {
+			INFO("Loading from user folder");
+			// Try user folder first
+			dir = _getUserFolder() + "/" + CONFIG_FOLDER;
+			_prepFolder(dir,'r');
+			m_d.load(dir);
+		} catch (std::exception e) {
+			WARNING(std::string("Failed to load configuration from user folder: ") + e.what());
+			WARNING("Using the game folder instead");
+			try {
+				// Fallback to game folder
+				dir = ".";
+				_prepFolder(dir,'r');
+				m_d.load(dir);
+			} catch (std::exception e) {
+				// Fail fail fail fail fail
+				WARNING(std::string("Failed to load configuration from game folder: ") + e.what());
+			}
+		}
+	} else {
+		try {
+			INFO("Loading from game folder");
+			// Try game folder first
+			dir = ".";
+			_prepFolder(dir,'r');
+			m_d.load(dir);
+		} catch (std::exception e) {
+			WARNING(std::string("Failed to load configuration from game folder: ") + e.what());
+			WARNING("Using the user folder instead");
+			try {
+				// Fallback to user folder
+				dir = _getUserFolder() + "/" + CONFIG_FOLDER;
+				_prepFolder(dir,'r');
+				m_d.load(dir);
+			} catch (std::exception e) {
+				// Fail fail fail fail fail
+				WARNING(std::string("Failed to load configuration from user folder: ") + e.what());
+			}
+		}
+	}
+}
+void ConfigManager::save ()
+{
+	// TODO Determine the correct folder to save settings to and write them
+	m_d.save(".");
 }
 
 
@@ -230,34 +224,6 @@ void ConfigManager::remove (std::string key) {
 }
 
 
-void ConfigManager::load ()
-{
-	// TODO Determine the correct folder to load settings from
-	
-	// Set the user's home folder
-	m_home_is_good = false;
-	try {
-		m_home = _getHomeFolder();
-		if (fs::is_directory(m_home)) m_home_is_good = true;
-		else throw std::runtime_error("Home folder doesn't exist: \"" + m_home + "\"");
-	} catch (std::runtime_error& e) { WARNING(e.what()); }
-	m_d.load(".");
-}
-void ConfigManager::save ()
-{
-	// TODO Determine the correct folder to save settings to and write them
-	
-	// Set the user's home folder
-	m_home_is_good = false;
-	try {
-		m_home = _getHomeFolder();
-		if (fs::is_directory(m_home)) m_home_is_good = true;
-		else throw std::runtime_error("Home folder doesn't exist: \"" + m_home + "\"");
-	} catch (std::runtime_error& e) { WARNING(e.what()); }
-	m_d.save(".");
-}
-
-
 // INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
 
 void ConfigManager::_set (std::string key, ETFDocument::etfnode value) {
@@ -270,9 +236,14 @@ ETFDocument::etfnode ConfigManager::_get (std::string key) {
 }
 
 
-std::string ConfigManager::_getHomeFolder () {
+std::string ConfigManager::_getUserFolder () {
 #ifdef _WIN32
-	// Combine environment variables
+	// Use %APPDATA% first
+	const char* str = getenv("APPDATA");
+	if (str != NULL && strlen(str) > 0)
+		return std::string(str);
+	
+	// Try the home folder instead
 	const char* str1 = getenv("HOMEDRIVE");
 	const char* str2 = getenv("HOMEPATH");
 	if (str1 != NULL && strlen(str1) > 0 && str2 != NULL && strlen(str2) > 0)
@@ -289,7 +260,15 @@ std::string ConfigManager::_getHomeFolder () {
 		return std::string(str);
 #endif
 	// Failed
-	throw std::runtime_error("Couldn't determine home folder");
+	throw std::runtime_error("Couldn't determine user folder");
+}
+void ConfigManager::_prepFolder (std::string path, char mode) {
+	if (mode == 'w') {
+		if (!fs::exists(path)) fs::create_directories(path);
+		if (!fs::is_directory(path)) throw std::runtime_error("Can't create folder");
+	} else if (mode == 'r') {
+		if (!fs::is_directory(path)) throw std::runtime_error("Folder doesn't exist");
+	} else throw std::runtime_error("Invalid prep mode");
 }
 
 
