@@ -22,12 +22,8 @@ namespace po = boost::program_options;
 
 ConfigManager::ConfigManager (int argc, char** argv)
 {
-	m_save_on_destroy = true;
-	#ifdef _WIN32
-		m_user_before_game = false;
-	#else
-		m_user_before_game = true;
-	#endif
+	m_save_on_destroy = SAVE_ON_DESTROY;
+	m_user_before_game = USER_BEFORE_GAME;
 	
 	// PARSE COMMAND LINE ARGUMENTS ///////////////////////////////////////////
 /*	if (argc>1) {
@@ -56,12 +52,15 @@ ConfigManager::ConfigManager (int argc, char** argv)
 	}
 */
 	load();
+	m_d.report();
+	std::cout << "test/key = " << getInt("test/key", 4l) << "\n";
+	m_d.report();
 }
 ConfigManager::~ConfigManager ()
 {
 	if (m_save_on_destroy) {
 		try {
-			INFO("Automatically saving configuration files");
+//			INFO("Automatically saving configuration");
 /*			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
 			WARNING("parameters:");
 			m_p.report();
@@ -70,7 +69,7 @@ ConfigManager::~ConfigManager ()
 			CRITICAL("///////////////////////////////////////////////////////////////////");
 */			save();
 		} catch (std::runtime_error e) {
-			WARNING(std::string("Failed to save configuration files: ") + e.what());
+			WARNING(std::string("Failed to save configuration: ") + e.what());
 		}
 	}
 }
@@ -85,10 +84,10 @@ void ConfigManager::load ()
 	std::string dir(".");
 	if (m_user_before_game) {
 		try {
-			INFO("Loading from user folder");
+			INFO("Loading configuration from user folder");
 			// Try user folder first
 			dir = _getUserFolder() + "/" + CONFIG_FOLDER;
-			_prepFolder(dir,'r');
+			_prepFolder(dir);
 			m_d.load(dir);
 		} catch (std::exception e) {
 			WARNING(std::string("Failed to load configuration from user folder: ") + e.what());
@@ -96,7 +95,7 @@ void ConfigManager::load ()
 			try {
 				// Fallback to game folder
 				dir = ".";
-				_prepFolder(dir,'r');
+				_prepFolder(dir);
 				m_d.load(dir);
 			} catch (std::exception e) {
 				// Fail fail fail fail fail
@@ -105,10 +104,10 @@ void ConfigManager::load ()
 		}
 	} else {
 		try {
-			INFO("Loading from game folder");
+			INFO("Loading configuration from game folder");
 			// Try game folder first
 			dir = ".";
-			_prepFolder(dir,'r');
+			_prepFolder(dir);
 			m_d.load(dir);
 		} catch (std::exception e) {
 			WARNING(std::string("Failed to load configuration from game folder: ") + e.what());
@@ -116,7 +115,7 @@ void ConfigManager::load ()
 			try {
 				// Fallback to user folder
 				dir = _getUserFolder() + "/" + CONFIG_FOLDER;
-				_prepFolder(dir,'r');
+				_prepFolder(dir);
 				m_d.load(dir);
 			} catch (std::exception e) {
 				// Fail fail fail fail fail
@@ -127,8 +126,48 @@ void ConfigManager::load ()
 }
 void ConfigManager::save ()
 {
-	// TODO Determine the correct folder to save settings to and write them
-	m_d.save(".");
+	std::string dir(".");
+	if (m_user_before_game) {
+		try {
+			INFO("Saving configuration to user folder");
+			// Try user folder first
+			dir = _getUserFolder() + "/" + CONFIG_FOLDER;
+			_prepFolder(dir);
+			m_d.save(dir);
+		} catch (std::exception e) {
+			WARNING(std::string("Failed to save configuration to user folder: ") + e.what());
+			WARNING("Using the game folder instead");
+			try {
+				// Fallback to game folder
+				dir = ".";
+				_prepFolder(dir);
+				m_d.load(dir);
+			} catch (std::exception e) {
+				// Fail fail fail fail fail
+				WARNING(std::string("Failed to save configuration to game folder: ") + e.what());
+			}
+		}
+	} else {
+		try {
+			INFO("Saving configuration to game folder");
+			// Try game folder first
+			dir = ".";
+			_prepFolder(dir);
+			m_d.load(dir);
+		} catch (std::exception e) {
+			WARNING(std::string("Failed to save configuration to game folder: ") + e.what());
+			WARNING("Using the user folder instead");
+			try {
+				// Fallback to user folder
+				dir = _getUserFolder() + "/" + CONFIG_FOLDER;
+				_prepFolder(dir);
+				m_d.load(dir);
+			} catch (std::exception e) {
+				// Fail fail fail fail fail
+				WARNING(std::string("Failed to save configuration to user folder: ") + e.what());
+			}
+		}
+	}
 }
 
 
@@ -262,13 +301,11 @@ std::string ConfigManager::_getUserFolder () {
 	// Failed
 	throw std::runtime_error("Couldn't determine user folder");
 }
-void ConfigManager::_prepFolder (std::string path, char mode) {
-	if (mode == 'w') {
+void ConfigManager::_prepFolder (std::string path) {
+	try {
 		if (!fs::exists(path)) fs::create_directories(path);
 		if (!fs::is_directory(path)) throw std::runtime_error("Can't create folder");
-	} else if (mode == 'r') {
-		if (!fs::is_directory(path)) throw std::runtime_error("Folder doesn't exist");
-	} else throw std::runtime_error("Invalid prep mode");
+	} catch (std::exception e) { throw std::runtime_error(std::string("Couldn't prepare folder: ") + e.what()); }
 }
 
 

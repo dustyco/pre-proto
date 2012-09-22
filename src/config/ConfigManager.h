@@ -8,13 +8,17 @@
 
 #include "etf.h"
 
+
 #ifdef _WIN32
 	#define CONFIG_FOLDER "proto"
+	#define USER_BEFORE_GAME false
 #else
 	#define CONFIG_FOLDER ".proto"
+	#define USER_BEFORE_GAME true
 #endif
 #define CONFIG_FILE_DEFAULT "proto"
-#define CONFIG_FILE_EXT "cfg"
+#define CONFIG_FILE_EXT ".cfg"
+#define SAVE_ON_DESTORY true
 
 
 class ConfigManager {
@@ -74,7 +78,7 @@ private:
 	};
 	
 	std::string          _getUserFolder ();
-	void                 _prepFolder (std::string path, char mode);
+	void                 _prepFolder (std::string path);
 	void                 _set (std::string key, ETFDocument::etfnode value);
 	ETFDocument::etfnode _get (std::string key);
 	

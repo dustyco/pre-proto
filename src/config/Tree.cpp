@@ -1,6 +1,7 @@
 
 
 #include <fstream>
+#include <sstream>
 #include <stack>
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem.hpp>
@@ -121,28 +122,46 @@ bool ConfigManager::Tree::_clean_node (ETFDocument::etfnode& node) {
 }
 
 
+// Load all config files from path into separate ETFDocuments
 void ConfigManager::Tree::load (std::string path)
 {
 	try {
-		// TODO Load all config files from this folder into separate ETFDocuments
-//		typedef std::map<std::string, ETFDocument> docmap;
-//		m_docs["test_parse"] = ETFDocument("hello=1;test=\"test2\"");
-		_clean();
-	} catch (std::runtime_error e) {
-		WARNING(e.what());
-	}
+	if (!fs::is_directory(path)) throw std::runtime_error("Folder doesn't exist");
+		for (fs::directory_iterator it(path),end; it!=end; it++)
+			try {
+				if (!fs::is_regular_file(*it)) continue;
+				if (fs::extension(*it).compare(CONFIG_FILE_EXT) != 0) continue;
+				std::string basename = fs::basename(*it);
+//				std::cout << basename << ": " << *it << "\n";
+				std::ifstream file((*it).path().native().c_str());
+				std::stringstream buffer;
+				buffer << file.rdbuf();
+				file.close();
+				std::cout << buffer.str();
+				m_docs[basename] = ETFDocument(buffer.str());
+			} catch (std::exception) {}
+	} catch (std::exception e) { WARNING(e.what()); }
+	_clean();
 }
+// Save all ETFDocuments to separate files in path 
 void ConfigManager::Tree::save (std::string path) {
+	if (!fs::is_directory(path)) throw std::runtime_error("Folder doesn't exist");
 	_clean();
 	typedef std::map<std::string, ETFDocument> docmap;
-	for (docmap::iterator it = m_docs.begin(); it!=m_docs.end(); it++) {
-		std::string filename = path + "/" + (*it).first + "." + CONFIG_FILE_EXT;
-		PRINT("writing: \"" + filename + "\"");
-		std::ofstream out(filename.c_str());
-//		if (out.good()) (*it).second.dump(std::cout);
-		if (out.good()) { (*it).second.dump(out, true); out << "\n"; }
-		else ERROR("failed to write to \"" + filename + "\"");
-	}
+	for (docmap::iterator it = m_docs.begin(); it!=m_docs.end(); it++)
+		try {
+			std::string filename = path + "/" + (*it).first + CONFIG_FILE_EXT;
+			if (boost::get<std::map<std::string, ETFDocument::etfnode> >((*it).second.getRoot().value).size() == 0) {
+				// It's empty, delete the file
+				if (fs::is_regular_file(filename)) fs::remove(filename);
+				continue;
+			}
+//			PRINT("Writing: \"" + filename + "\"");
+			std::ofstream out(filename.c_str());
+			if (out.good()) { (*it).second.dump(out, true); out << "\n"; }
+			else WARNING("Failed to write configuration file: \"" + filename + "\"");
+		} catch (std::exception) {}
+
 }
 
 void ConfigManager::Tree::report () {
