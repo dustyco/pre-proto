@@ -52,8 +52,10 @@ ConfigManager::ConfigManager (int argc, char** argv)
 	}
 */
 	load();
+	WARNING("post-load report:");
 	m_d.report();
 	std::cout << "test/key = " << getInt("test/key", 4l) << "\n";
+	WARNING("post-set report:");
 	m_d.report();
 }
 ConfigManager::~ConfigManager ()

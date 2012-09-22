@@ -18,7 +18,7 @@
 #endif
 #define CONFIG_FILE_DEFAULT "proto"
 #define CONFIG_FILE_EXT ".cfg"
-#define SAVE_ON_DESTORY true
+#define SAVE_ON_DESTROY true
 
 
 class ConfigManager {
