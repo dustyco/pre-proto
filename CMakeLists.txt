@@ -134,9 +134,9 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES DEBUG_POSTFIX _d)
 target_link_libraries(${CMAKE_PROJECT_NAME} ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
 
 # Add propagated libraries
-foreach(_lib ${preproto_USERLIBS})
+foreach (_lib ${preproto_USERLIBS})
 	target_link_libraries(${CMAKE_PROJECT_NAME} ${_lib})
-endforeach()
+endforeach ()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)
@@ -153,29 +153,33 @@ if (MINGW OR UNIX)
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/dist)
 endif (MINGW OR UNIX)
 
+
+
+# FILE INSTALLATION ###########################################################
+install(TARGETS
+	${CMAKE_PROJECT_NAME}
+	RUNTIME DESTINATION .
+	CONFIGURATIONS All
+	)
+install(DIRECTORY
+	${CMAKE_SOURCE_DIR}/dist/media
+	DESTINATION .
+	CONFIGURATIONS Release RelWithDebInfo Debug
+	)
 if (WIN32)
-	install(TARGETS
-		${CMAKE_PROJECT_NAME}
-		RUNTIME DESTINATION .
-		CONFIGURATIONS All
-		)
-	install(DIRECTORY
-		${CMAKE_SOURCE_DIR}/dist/media
-		DESTINATION .
-		CONFIGURATIONS Release RelWithDebInfo Debug
-		)
-	install(FILES
-		${CMAKE_SOURCE_DIR}/dist/bin/cfg-windows/plugins.cfg
-		${CMAKE_SOURCE_DIR}/dist/bin/resources.cfg
-		DESTINATION .
-		CONFIGURATIONS Release RelWithDebInfo
-		)
-	install(FILES
-		${CMAKE_SOURCE_DIR}/dist/bin/cfg-windows/plugins_d.cfg
-		${CMAKE_SOURCE_DIR}/dist/bin/resources_d.cfg
-		DESTINATION .
-		CONFIGURATIONS Debug
-		)
+# Doesn't need these anymore
+#	install(FILES
+#		${CMAKE_SOURCE_DIR}/dist/bin/cfg-windows/plugins.cfg
+#		${CMAKE_SOURCE_DIR}/dist/bin/resources.cfg
+#		DESTINATION .
+#		CONFIGURATIONS Release RelWithDebInfo
+#		)
+#	install(FILES
+#		${CMAKE_SOURCE_DIR}/dist/bin/cfg-windows/plugins_d.cfg
+#		${CMAKE_SOURCE_DIR}/dist/bin/resources_d.cfg
+#		DESTINATION .
+#		CONFIGURATIONS Debug
+#		)
 	install(FILES
 		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
@@ -209,22 +213,20 @@ if (WIN32)
 endif (WIN32)
 
 if (UNIX)
-	install(TARGETS
-		${CMAKE_PROJECT_NAME}
-		RUNTIME DESTINATION .
-		CONFIGURATIONS All
-		)
-	install(DIRECTORY
-		${CMAKE_SOURCE_DIR}/dist/media
-		DESTINATION .
-		CONFIGURATIONS Release RelWithDebInfo Debug
-		)
+	list(GET OGRE_RenderSystem_GL_LIBRARIES 1 OGRE_RenderSystem_GL_LINK)
+	GET_FILENAME_COMPONENT(OGRE_RenderSystem_GL_FILE ${OGRE_RenderSystem_GL_LINK} REALPATH)
 	install(FILES
-		${CMAKE_SOURCE_DIR}/dist/bin/cfg-linux/plugins.cfg
-		${CMAKE_SOURCE_DIR}/dist/bin/resources.cfg
+		${OGRE_RenderSystem_GL_FILE}
+		${OGRE_RenderSystem_GL_LINK}
 		DESTINATION .
-		CONFIGURATIONS Release RelWithDebInfo Debug
 		)
+# Doesn't need these anymore
+#	install(FILES
+#		${CMAKE_SOURCE_DIR}/dist/bin/cfg-linux/plugins.cfg
+#		${CMAKE_SOURCE_DIR}/dist/bin/resources.cfg
+#		DESTINATION .
+#		CONFIGURATIONS Release RelWithDebInfo Debug
+#		)
 # Linux builds aren't being distributed so let ogre find
 # the plugins with the config file
 #	install(FILES

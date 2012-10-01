@@ -62,9 +62,16 @@ bool InputManager::isKeyPressed(OIS::KeyCode k) {
 	return m_keybd->isKeyDown(k);
 }
 
-// Key listener
+// FRAME LISTENER /////////////////////////////////////////////////////////////
 bool InputManager::frameRenderingQueued(const Ogre::FrameEvent &evt) {
-	// Update stuffs
+/*	m_mouse->capture();
+	m_keybd->capture();
+	m_mouseState = m_mouse->getMouseState();
+*/	
+	return true;
+}
+
+bool InputManager::frameStarted(const Ogre::FrameEvent &evt) {
 	m_mouse->capture();
 	m_keybd->capture();
 	m_mouseState = m_mouse->getMouseState();
@@ -72,6 +79,7 @@ bool InputManager::frameRenderingQueued(const Ogre::FrameEvent &evt) {
 	return true;
 }
 
+// KEY LISTENER ///////////////////////////////////////////////////////////////
 bool InputManager::keyPressed(const OIS::KeyEvent& evt) {
 	list<OIS::KeyListener*>::iterator i;
 	for(i=m_keyListeners.begin();i != m_keyListeners.end();i++) {

@@ -4,6 +4,7 @@ add_subdirectory(profiler)
 add_subdirectory(logging)
 add_subdirectory(input)
 add_subdirectory(game)
+add_subdirectory(video)
 
 # Add our own sources
 add_sources(main.cpp Application.cpp)

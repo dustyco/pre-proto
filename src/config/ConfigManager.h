@@ -59,6 +59,7 @@ public:
 	
 	void        load ();
 	void        save ();
+	void        report ();
 	
 private:
 	struct Tree {

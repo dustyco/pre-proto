@@ -171,6 +171,10 @@ void ConfigManager::save ()
 		}
 	}
 }
+void ConfigManager::report () {
+	m_p.report();
+	m_d.report();
+}
 
 
 

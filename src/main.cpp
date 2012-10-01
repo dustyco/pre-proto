@@ -2,17 +2,17 @@
 #include <stdio.h>
 #include <stdexcept>
 
-int main (int argc, char **argv)
+int main (int argc, char** argv)
 {
-	Application a;
-	int err;
+	Application app;
+	int error;
 
 	try {
-		err = a.init(argc, argv);
-		if(err != 0) return err;
-		err = a.run();
-		a.shutdown();
-		return err;
+		error = app.init(argc, argv);
+		if (error != 0) return error;
+		error = app.run();
+		app.shutdown();
+		return error;
 	} catch (std::exception e) {
 		fprintf(stderr, "Unhandled exception: %s\n", e.what());
 	}
