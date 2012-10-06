@@ -10,10 +10,10 @@ using namespace std;
 DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
 {
 	lock();
+	
 	m_config = config;
 	m_root = root;
 
-	
 /*	// List rendersystem options
 	Ogre::RenderSystem* rs = m_root->getRenderSystem();
 	Ogre::ConfigOptionMap& ops = rs->getConfigOptions();
@@ -32,7 +32,6 @@ DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
 	misc_dummy["vsync"] = "true";
 	misc_dummy["hidden"] = "true";
 	m_dummyWindow = m_root->createRenderWindow("PROTO DUMMY", 1, 1, false, &misc_dummy);
-//	m_dummyWindow->setHidden(true);
 	
 	// Create main window
 	_initWindow();
@@ -43,13 +42,15 @@ DisplayManager::~DisplayManager () {
 	delete m_dummyWindow;
 }
 
-bool DisplayManager::needsNewViewport () {
+bool DisplayManager::windowIsNew () {
 	lock_shared();
-	if (m_needs_new_viewport) {
-		m_needs_new_viewport = false;
+	
+	if (m_window_is_new) {
+		m_window_is_new = false;
 		unlock_shared();
 		return true;
 	}
+	
 	unlock_shared();
 	return false;
 }
@@ -57,45 +58,56 @@ bool DisplayManager::needsNewViewport () {
 void DisplayManager::applySettings ()
 {
 	lock();
+	
 	// Get intended settings
 	int new_w, new_h;
 	bool new_fullscreen;
 	Ogre::NameValuePairList new_misc;
 	_getSettings(new_w, new_h, new_fullscreen, new_misc);
 	
-	// See what needs applying
+	// Decide to recreate the window or just use set()'s
+	// NOTE: WINDOW RECREATION DOESN'T WORK YET SO ALWAYS USE SETS FOR NOW
 //	getFSAA()
-	if (true) {
-		WARNING("destroying the window");
-		// FSAA setting is different - gotta recreate the window
-//		m_renderWindow->destroy();
-		m_root->destroyRenderTarget(m_renderWindow);
-//		m_renderWindow->create(WINDOW_TITLE, new_w, new_h, new_fullscreen, &new_misc);
-		_initWindow();
-		WARNING("done");
+	if (false) {
+		// FSAA setting is different - gotta reinit the window
+		_reinitWindow();
 	} else {
 		// FSAA is the same - sets will suffice
-		// Resolution/mode (ogre will automatically ignore if there's no change)
+		
+		// Resolution/mode (ogre will do nothing if there's no change)
 		m_renderWindow->setFullscreen(new_fullscreen, new_w, new_h);
+		
 		// Vsync
-		if (new_misc["vsync"].compare((m_renderWindow->isVSyncEnabled())?"true":"false") != 0) {
-//			INFO("vsync = %s", (!m_renderWindow->isVSyncEnabled())?"true":"false");
+		if (new_misc["vsync"].compare((m_renderWindow->isVSyncEnabled())?"true":"false") != 0) 
 			m_renderWindow->setVSyncEnabled(!m_renderWindow->isVSyncEnabled());
-		}
 	}
+	
+	unlock();
+}
+
+void DisplayManager::reinitWindow () {
+	lock();
+	
+	m_root->destroyRenderTarget(m_renderWindow);
+	_initWindow();
+	
 	unlock();
 }
 
 // INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
 void DisplayManager::_initWindow ()
 {
-	WARNING("creating new window");
-	
-	// This allows us to submit all parameters at once -
+	// This allows us to submit all parameters at once
 	int width, height;
 	bool fullscreen;
 	Ogre::NameValuePairList misc;
 	_getSettings(width, height, fullscreen, misc);
+	
+/*	cout << width << "x" << height << endl;
+	cout << "fullscreen: " << (fullscreen?"true":"false") << endl;
+	for (Ogre::NameValuePairList::iterator it = misc.begin(); it!=misc.end(); it++)
+		cout << (*it).first << " = " << (*it).second << endl;
+*/	
 	m_renderWindow = m_root->createRenderWindow(
 		WINDOW_TITLE,
 		width,
@@ -103,11 +115,14 @@ void DisplayManager::_initWindow ()
 		fullscreen,
 		&misc
 		);
-	m_needs_new_viewport = true;
+	m_window_is_new = true;
+}
+void DisplayManager::_reinitWindow () {
+	CRITICAL("DisplayManager::_reinitWindow(): THIS SHOULDN'T BE USED - IT DOESN'T WORK");
 	
-	INFO("created");
-		
-		
+//	m_renderWindow->destroy();
+	m_root->destroyRenderTarget(m_renderWindow);
+	_initWindow();
 }
 void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Ogre::NameValuePairList& misc)
 {
@@ -141,8 +156,7 @@ void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Og
 	}
 	
 	// FSAA
-	// TODO Compare it to the available ones
-	misc["FSAA"] = m_config->getString("video:display/fsaa", "0");
+	misc["FSAA"] = _getValidFSAA();
 	
 	// vsync
 	misc["vsync"] = ((m_config->getBool("video:display/vsync", DEFAULT_VSYNC))?"true":"false");
@@ -193,5 +207,17 @@ void DisplayManager::_parseRes (std::string res, int& width, int& height) {
 		height = 0;
 	}
 }
+
+string DisplayManager::_getValidFSAA () {
+	string fsaa = m_config->getString("video:display/fsaa", "auto");
+	if (fsaa.compare("auto") == 0) fsaa = "4";
+	
+	Ogre::StringVector possible = m_root->getRenderSystem()->getConfigOptions()["FSAA"].possibleValues;
+	for (Ogre::StringVector::iterator it = possible.begin(); it != possible.end(); it++)
+		if ((*it) == fsaa) return fsaa;
+
+	return string("0");
+}
+
 
 

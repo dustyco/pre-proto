@@ -98,7 +98,7 @@ void Application::shutdown () {
 }
 
 // Early start on cpu-based updates
-// Input here will be up to 1 extra frame older than usual
+// Input here will be up to 1 extra frame older than frameStarted
 bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt)
 {
 	
@@ -107,83 +107,26 @@ bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt)
 // Normal frame start
 bool Application::frameStarted (const Ogre::FrameEvent& evt)
 {
+	double time = (double)timer.getMicroseconds()/1e6;
+	
 	// Input stuff
 	bool running = true;
 	Ogre::WindowEventUtilities::messagePump();
 	if (m_input->isKeyPressed(OIS::KC_ESCAPE)) running = false;
 	if (!running) return false;
 
-	double time = (double)timer.getMicroseconds()/1e6;
-//	INFO("loop");
 	
-	// Periodically toggle fsaa
-	if ((int)(time/5)%2 == 0) {
-		if (alt) {
-			m_config->set("video:display/fsaa", "0");
-			WARNING("turning fsaa off");
-			m_display->applySettings();
-			alt = false;
-		}
-	} else {
-		if (!alt) {
-			m_config->set("video:display/fsaa", "4");
-			WARNING("turning fsaa 4");
-			m_display->applySettings();
-			alt = true;
-		}
-	}
-	
-/*	// Periodically toggle vsync
-	if ((int)(time/5)%2 == 0) {
-		if (alt) {
-			m_config->set("video:display/vsync", false);
-			WARNING("turning vsync off");
-			m_display->applySettings();
-			alt = false;
-		}
-	} else {
-		if (!alt) {
-			m_config->set("video:display/vsync", true);
-			WARNING("turning vsync on");
-			m_display->applySettings();
-			alt = true;
-		}
-	}
-*/
-/*	// Periodically toggle resolution
-	if ((int)(time/6)%2 == 0) {
-		if (alt) {
-			m_config->set("video:display/mode", "fullscreen");
-			m_config->set("video:display/fullscreen_res", "auto");
-			m_display->applySettings();
-			alt = false;
-		}
-	} else {
-		if (!alt) {
-			m_config->set("video:display/mode", "fullscreen");
-			m_config->set("video:display/fullscreen_res", "1024x768");
-			m_display->applySettings();
-			alt = true;
-		}
-	}
-*/
 	m_display->lock_shared();
 
-	// Initialize the viewport
-	if (m_display->needsNewViewport()) {
-		WARNING("redoing viewport");
+	// Reinitialize stuff that depends on the window
+	if (m_display->windowIsNew()) {
 		m_viewport = m_display->getRenderWindow()->addViewport(m_camera);
 		m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
 		m_camera->setAspectRatio(1.77);
 		m_viewport->setCamera(m_camera);
 		
-		WARNING("redoing input");
-		
-//		//Remove ourself as a Window listener
-//		Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
-//		delete m_input;
+//		if (m_input) delete m_input;
 //		m_input = new InputManager(m_display->getRenderWindow(), m_root);
-		WARNING("done input and viewport");
 	}
 	
 	// Rotate the camera

@@ -1,19 +1,13 @@
-/*
- *  InputManager.cpp
- *  TimeStream
- *
- *  Created by Noah Zentzis on 4/9/10.
- *  Copyright 2010 Noah Zentzis. All rights reserved.
- *
- */
 
-#include "InputManager.h"
+
 #include <sstream>
 #include <iostream>
-
 using namespace std;
 
-InputManager::InputManager(Ogre::RenderWindow* win, Ogre::Root* rt) {
+#include "InputManager.h"
+
+
+InputManager::InputManager(Ogre::RenderWindow* win, Ogre::Root* root) {
 	OIS::ParamList pl;
 	ostringstream ss;
 	size_t winHandle = 0;
@@ -27,7 +21,7 @@ InputManager::InputManager(Ogre::RenderWindow* win, Ogre::Root* rt) {
 	m_mouse->setEventCallback(this);
 	
 	// Add a listener
-	rt->addFrameListener(this);
+	root->addFrameListener(this);
 }
 
 InputManager::~InputManager() {

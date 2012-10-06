@@ -33,4 +33,5 @@ private:
 	
 	Ogre::Timer timer;
 	bool alt;
+	double periodtime;
 };
