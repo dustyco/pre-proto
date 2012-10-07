@@ -65,8 +65,8 @@ private:
 	Ogre::Root*                  m_root;
 	Ogre::RenderWindow*          m_renderWindow;
 	Ogre::RenderWindow*          m_dummyWindow;
-	bool                         m_window_is_new;
-	bool                         m_closing;
+	bool                         m_window_is_new, m_closing;
+	bool                         m_moved, m_resized;
 };
 
 

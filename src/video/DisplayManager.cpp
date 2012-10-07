@@ -1,5 +1,6 @@
 
 
+#include <sstream>
 #include <string>
 using namespace std;
 
@@ -37,6 +38,7 @@ DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
 	_initWindow();
 	
 	// Listen for window events
+	m_moved = m_resized = false;
 	Ogre::WindowEventUtilities::addWindowEventListener(m_renderWindow, this);
 	
 	unlock();
@@ -49,6 +51,7 @@ DisplayManager::~DisplayManager () {
 void DisplayManager::applySettings ()
 {
 	lock();
+	m_moved = m_resized = false;
 	
 	// Get intended settings
 	int new_w, new_h;
@@ -112,13 +115,35 @@ bool DisplayManager::isClosing () {
 
 // WindowEventListener CALLBACKS //////////////////////////////////////////////
 void DisplayManager::windowMoved (Ogre::RenderWindow* rw) {
+	lock();
+	if (!rw->isFullScreen()) {
+		if (!m_moved) { m_moved = true; unlock(); return; }
 	
+		unsigned int d; int x, y;
+		rw->getMetrics(d, d, d, x, y);
+		stringstream pos; pos << x << 'x' << y;
+//		INFO("windowMoved() %s", pos.str().c_str());
+		m_config->set("video:display/window_pos", pos.str());
+	}
+	unlock();
 }
 void DisplayManager::windowResized (Ogre::RenderWindow* rw) {
-	
+	lock();
+	if (!m_resized) { m_resized = true; unlock(); return; }
+	stringstream res; res << rw->getWidth() << 'x' << rw->getHeight();
+//	INFO("windowResized() %s", res.str().c_str());
+	if (rw->isFullScreen()) m_config->set("video:display/fullscreen_res", res.str());
+	else {
+		unsigned int d; int x, y;
+		rw->getMetrics(d, d, d, x, y);
+		stringstream pos; pos << x << 'x' << y;
+		m_config->set("video:display/window_pos", pos.str());
+		m_config->set("video:display/window_res", res.str());
+	}
+	unlock();
 }
 void DisplayManager::windowFocusChange (Ogre::RenderWindow* rw) {
-	
+//	INFO("windowFocusChange()");
 }
 bool DisplayManager::windowClosing (Ogre::RenderWindow* rw) {
 	lock();

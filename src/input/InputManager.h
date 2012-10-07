@@ -14,6 +14,13 @@ public:
 	InputManager (Ogre::RenderWindow* win, Ogre::Root* r);
 	~InputManager ();
 	
+	// EXTERNAL LISTENERS /////////////////////////////////////////////////////
+	void registerKeyListener   (OIS::KeyListener* l);
+	void registerMouseListener (OIS::MouseListener* l);
+	
+	void unregisterKeyListener   (OIS::KeyListener* l);
+	void unregisterMouseListener (OIS::MouseListener* l);
+	
 	// QUERIES ////////////////////////////////////////////////////////////////
 	Ogre::Vector2   mousePosition ();
 	OIS::MouseState getMouseState ();
@@ -22,9 +29,6 @@ public:
 	bool isKeyPressed   (OIS::KeyCode k);
 	
 	// CALLBACKS //////////////////////////////////////////////////////////////
-	void registerKeyListener   (OIS::KeyListener* l);
-	void registerMouseListener (OIS::MouseListener* l);
-	
 	bool keyPressed  (const OIS::KeyEvent& evt);
 	bool keyReleased (const OIS::KeyEvent& evt);
 	

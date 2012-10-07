@@ -34,12 +34,20 @@ void InputManager::registerKeyListener(OIS::KeyListener* l) {
 	m_keyListeners.push_front(l);
 	m_keyListeners.unique();
 }
-
 void InputManager::registerMouseListener(OIS::MouseListener* l) {
 	m_mouseListeners.push_front(l);
 	m_mouseListeners.unique();
 }
 
+void InputManager::unregisterKeyListener(OIS::KeyListener* l) {
+	m_keyListeners.remove(l);
+}
+void InputManager::unregisterMouseListener(OIS::MouseListener* l) {
+	m_mouseListeners.remove(l);
+}
+
+
+// QUERIES ////////////////////////////////////////////////////////////////////
 Ogre::Vector2 InputManager::mousePosition() {
 	return m_mousePos;
 }
@@ -56,6 +64,8 @@ bool InputManager::isKeyPressed(OIS::KeyCode k) {
 	return m_keybd->isKeyDown(k);
 }
 
+
+// CALLBACKS //////////////////////////////////////////////////////////////////
 // FRAME LISTENER /////////////////////////////////////////////////////////////
 bool InputManager::frameRenderingQueued(const Ogre::FrameEvent &evt) {
 /*	m_mouse->capture();

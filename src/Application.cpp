@@ -67,6 +67,11 @@ int Application::init (int argc, char **argv) {
 	m_camera->lookAt(Ogre::Vector3(0,0,0));
 	m_camera->setNearClipDistance(1);
 	
+	// This will have to be reinitialized if the window is recreated for FSAA changes (it's not right now)
+	m_viewport = m_display->getRenderWindow()->addViewport(m_camera);
+	m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
+	m_viewport->setCamera(m_camera);
+	
 	// PLACEHOLDER SCENE //////////////////////////////////////////////////////
 	Ogre::Entity* ogreHead = m_sceneMgr->createEntity("Head", "ogrehead.mesh");
 	Ogre::SceneNode* headNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode("HeadNode");
@@ -77,6 +82,7 @@ int Application::init (int argc, char **argv) {
 
 	// Set up input handling
 	m_input = new InputManager(m_display->getRenderWindow(), m_root);
+	m_input->registerKeyListener(this);
 
 	INFO("Proto initialized");
 	return 0;
@@ -84,12 +90,14 @@ int Application::init (int argc, char **argv) {
 
 int Application::run () {
 	INFO("Rendering");
+	running = true;
 	m_root->startRendering();
 
 	return 0;
 }
 
 void Application::shutdown () {
+	m_input->unregisterKeyListener(this);
 	m_root->shutdown();
 	delete m_config;
 	
@@ -109,25 +117,14 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 {
 	double time = (double)timer.getMicroseconds()/1e6;
 	
-	// Input stuff
-	bool running = true;
-//	Ogre::WindowEventUtilities::messagePump(); // Not needed with startRendering()
+	// See if we should stop
 	if (m_display->isClosing()) running = false;
-	if (m_input->isKeyPressed(OIS::KC_ESCAPE)) running = false;
 	if (!running) return false;
 
 	
 	m_display->lock_shared();
-
-	// Reinitialize stuff that depends on the window
-	if (m_display->windowIsNew()) {
-		m_viewport = m_display->getRenderWindow()->addViewport(m_camera);
-		m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
-		m_viewport->setCamera(m_camera);
-		
-//		if (m_input) delete m_input;
-//		m_input = new InputManager(m_display->getRenderWindow(), m_root);
-	}
+	
+	float aspect = (float)(m_display->getRenderWindow()->getWidth()) / m_display->getRenderWindow()->getHeight();
 	
 	// Rotate the camera
 	m_camNode->setPosition( Ogre::Vector3(sin(time)*70, cos(time*3.14159)*10, cos(time)*70) );
@@ -135,12 +132,25 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, sin(time*3.14)*5, cos(time)*50) );
 //	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, 0,50) );
 	m_camera->lookAt(Ogre::Vector3(0,0,0));
-	m_camera->setAspectRatio(1.77);
+	m_camera->setAspectRatio(aspect);
 	m_camera->setFOVy(Ogre::Radian(sin(time/4)/2+1));
 	
 	m_display->unlock_shared();
 	
 	return true;
 }
+
+bool Application::keyPressed (const OIS::KeyEvent& evt) {
+	switch (evt.key) {
+		case OIS::KC_ESCAPE: running = false; break;
+		case OIS::KC_BACKSLASH:
+			// Toggle fullscreen/window
+			if (m_display->getRenderWindow()->isFullScreen()) m_config->set("video:display/mode", "window");
+			else m_config->set("video:display/mode", "fullscreen");
+			m_display->applySettings();
+			break;
+	} return true;
+}
+bool Application::keyReleased(const OIS::KeyEvent& evt) { return true; }
 
 

@@ -9,7 +9,10 @@
 #include "input/input.h"
 
 
-class Application : public Ogre::FrameListener {
+class Application :
+	public Ogre::FrameListener,
+	public OIS::KeyListener
+{
 public:
 	int init (int argc, char** argv);
 	int run ();
@@ -18,6 +21,10 @@ public:
 	// Ogre::FrameListener
 	bool frameStarted         (const Ogre::FrameEvent& evt);
 	bool frameRenderingQueued (const Ogre::FrameEvent& evt);
+	
+	// OIS::KeyListener
+	bool keyPressed  (const OIS::KeyEvent& evt);
+	bool keyReleased  (const OIS::KeyEvent& evt);
 
 private:
 	Logging::LogManager* m_log;
@@ -32,4 +39,5 @@ private:
 	Ogre::Viewport*     m_viewport;
 	
 	Ogre::Timer timer;
+	bool running;
 };
