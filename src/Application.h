@@ -32,6 +32,4 @@ private:
 	Ogre::Viewport*     m_viewport;
 	
 	Ogre::Timer timer;
-	bool alt;
-	double periodtime;
 };

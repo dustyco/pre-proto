@@ -111,7 +111,8 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 	
 	// Input stuff
 	bool running = true;
-	Ogre::WindowEventUtilities::messagePump();
+//	Ogre::WindowEventUtilities::messagePump(); // Not needed with startRendering()
+	if (m_display->isClosing()) running = false;
 	if (m_input->isKeyPressed(OIS::KC_ESCAPE)) running = false;
 	if (!running) return false;
 
@@ -122,7 +123,6 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 	if (m_display->windowIsNew()) {
 		m_viewport = m_display->getRenderWindow()->addViewport(m_camera);
 		m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
-		m_camera->setAspectRatio(1.77);
 		m_viewport->setCamera(m_camera);
 		
 //		if (m_input) delete m_input;
@@ -135,6 +135,7 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, sin(time*3.14)*5, cos(time)*50) );
 //	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, 0,50) );
 	m_camera->lookAt(Ogre::Vector3(0,0,0));
+	m_camera->setAspectRatio(1.77);
 	m_camera->setFOVy(Ogre::Radian(sin(time/4)/2+1));
 	
 	m_display->unlock_shared();

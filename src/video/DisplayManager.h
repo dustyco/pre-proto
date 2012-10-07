@@ -13,7 +13,7 @@
 
 // In charge of the ogre window according to settings in the ConfigManager
 // Outside systems are to use the applySettings function
-class DisplayManager : public boost::shared_mutex {
+class DisplayManager : public boost::shared_mutex, public Ogre::WindowEventListener {
 public:
 	DisplayManager (ConfigManager* config, Ogre::Root* root);
 	~DisplayManager ();
@@ -30,9 +30,20 @@ public:
 	// DOES NOT WORK
 	void reinitWindow ();
 	
-	// Returns true when the window has been created/recreated and external systems
-	// need to be aware - resets on being called
+	// Returns true when the window has been created/recreated and external systems need to be aware
+	// Resets on being called
 	bool windowIsNew ();
+	
+	// True if the close button was pressed
+	// Resets on being called
+	bool isClosing ();
+	
+	// WindowEventListener
+	void windowMoved (Ogre::RenderWindow* rw);
+	void windowResized (Ogre::RenderWindow* rw);
+	void windowFocusChange (Ogre::RenderWindow* rw);
+	void windowClosed (Ogre::RenderWindow* rw);
+	bool windowClosing (Ogre::RenderWindow* rw);
 	
 private:
 	void _initWindow ();
@@ -55,6 +66,7 @@ private:
 	Ogre::RenderWindow*          m_renderWindow;
 	Ogre::RenderWindow*          m_dummyWindow;
 	bool                         m_window_is_new;
+	bool                         m_closing;
 };
 
 

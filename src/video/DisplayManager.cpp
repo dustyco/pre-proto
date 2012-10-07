@@ -36,23 +36,14 @@ DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
 	// Create main window
 	_initWindow();
 	
+	// Listen for window events
+	Ogre::WindowEventUtilities::addWindowEventListener(m_renderWindow, this);
+	
 	unlock();
 }
 DisplayManager::~DisplayManager () {
+	Ogre::WindowEventUtilities::removeWindowEventListener(m_renderWindow, this);
 	delete m_dummyWindow;
-}
-
-bool DisplayManager::windowIsNew () {
-	lock_shared();
-	
-	if (m_window_is_new) {
-		m_window_is_new = false;
-		unlock_shared();
-		return true;
-	}
-	
-	unlock_shared();
-	return false;
 }
 
 void DisplayManager::applySettings ()
@@ -72,8 +63,6 @@ void DisplayManager::applySettings ()
 		// FSAA setting is different - gotta reinit the window
 		_reinitWindow();
 	} else {
-		// FSAA is the same - sets will suffice
-		
 		// Resolution/mode (ogre will do nothing if there's no change)
 		m_renderWindow->setFullscreen(new_fullscreen, new_w, new_h);
 		
@@ -93,6 +82,59 @@ void DisplayManager::reinitWindow () {
 	
 	unlock();
 }
+
+bool DisplayManager::windowIsNew () {
+	lock_shared();
+	
+	if (m_window_is_new) {
+		m_window_is_new = false;
+		unlock_shared();
+		return true;
+	}
+	
+	unlock_shared();
+	return false;
+}
+
+bool DisplayManager::isClosing () {
+	lock_shared();
+	
+	if (m_closing) {
+		m_closing = false;
+		unlock_shared();
+		return true;
+	}
+	
+	unlock_shared();
+	return false;
+}
+
+
+// WindowEventListener CALLBACKS //////////////////////////////////////////////
+void DisplayManager::windowMoved (Ogre::RenderWindow* rw) {
+	
+}
+void DisplayManager::windowResized (Ogre::RenderWindow* rw) {
+	
+}
+void DisplayManager::windowFocusChange (Ogre::RenderWindow* rw) {
+	
+}
+bool DisplayManager::windowClosing (Ogre::RenderWindow* rw) {
+	lock();
+	m_closing = true;
+	unlock();
+	return false;
+}
+void DisplayManager::windowClosed (Ogre::RenderWindow* rw) {
+	// Note: This probably won't get called because of the above interception
+	
+	// The window has not actually close yet when this event triggers. It's only
+	// closed after all windowClosed events are triggered. This allows apps to deinitialise
+	// properly if they have services that needs the window to exist when deinitialising.
+}
+
+
 
 // INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
 void DisplayManager::_initWindow ()
