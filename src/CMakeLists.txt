@@ -10,4 +10,7 @@ add_subdirectory(video)
 add_sources(main.cpp Application.cpp)
 
 # Propagate sub-libraries
-require_libraries(pthread)
+if (UNIX)
+	require_libraries(pthread)
+endif ()
+

@@ -6,7 +6,7 @@
 #include "Application.h"
 
 
-int Application::init (int argc, char **argv) {
+void Application::init (int argc, char **argv) {
 	m_log = Logging::LogManager::getInstance();
 	m_log->addLogger(new Logging::ConsoleLogger(), Logging::DEBUG);
 
@@ -22,29 +22,19 @@ int Application::init (int argc, char **argv) {
 
 	// Initialize the Ogre root
 	m_root = new Ogre::Root("", "", "");
-/*	if ((!m_root->restoreConfig()) && (!m_root->showConfigDialog())) {
-		CRITICAL("Cannot restore or generate OGRE configuration");
-		return -1;
-	}
-*/
-	// Load the render system
-	try {
-		// Where to look for plugins at runtime
-		#ifndef OGRE_PLUGIN_DIR
-		#define OGRE_PLUGIN_DIR "."
-		#endif
-		#ifdef _WIN32
-			m_root->loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_Direct3D9");
-			Ogre::RenderSystem* rs = m_root->getRenderSystemByName("Direct3D9 Rendering Subsystem");
-		#else
-			m_root->loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_GL");
-			Ogre::RenderSystem* rs = m_root->getRenderSystemByName("OpenGL Rendering Subsystem");
-		#endif
-		m_root->setRenderSystem(rs);
-	} catch (std::exception e) {
-		CRITICAL("Failed to start render system");
-		return -1;
-	}
+	
+	// Load Ogre plugins
+	#ifndef OGRE_PLUGIN_DIR
+	#define OGRE_PLUGIN_DIR "."
+	#endif
+	#ifdef _WIN32
+		m_root->loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_Direct3D9");
+		Ogre::RenderSystem* rs = m_root->getRenderSystemByName("Direct3D9 Rendering Subsystem");
+	#else
+		m_root->loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_GL");
+		Ogre::RenderSystem* rs = m_root->getRenderSystemByName("OpenGL Rendering Subsystem");
+	#endif
+	m_root->setRenderSystem(rs);
 	
 	// Initialize the display manager
 	m_display = new DisplayManager(m_config, m_root);
@@ -85,15 +75,12 @@ int Application::init (int argc, char **argv) {
 	m_input->registerKeyListener(this);
 
 	INFO("Proto initialized");
-	return 0;
 }
 
-int Application::run () {
+void Application::run () {
 	INFO("Rendering");
 	running = true;
 	m_root->startRendering();
-
-	return 0;
 }
 
 void Application::shutdown () {

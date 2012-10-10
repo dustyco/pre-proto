@@ -8,14 +8,18 @@
 #include "video/video.h"
 #include "input/input.h"
 
+#ifndef OGRE_PLUGIN_DIR
+#define OGRE_PLUGIN_DIR "."
+#endif
+
 
 class Application :
 	public Ogre::FrameListener,
 	public OIS::KeyListener
 {
 public:
-	int init (int argc, char** argv);
-	int run ();
+	void init (int argc, char** argv);
+	void run ();
 	void shutdown ();
 	
 	// Ogre::FrameListener
