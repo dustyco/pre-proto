@@ -18,7 +18,7 @@
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
 
-//#define PARSER_DEBUG
+#define PARSER_DEBUG
 
 using namespace boost;
 namespace qi = spirit::qi;
@@ -63,9 +63,9 @@ struct etf_parser : qi::grammar<Iterator, std::map<std::string, etfnode>(), asci
 
 		listObj %= lit('{') >> -(dataVal % ',') >> lit('}');
 		
-		mapKey %= +qi::char_("a-zA-Z_-0-9.");
+		mapKey %= +(qi::char_("a-zA-Z0-9") | qi::char_('_') | qi::char_('.') | qi::char_('-'));
 		mapPair %= mapKey >> lit('=') >> dataVal;
-		mapObj %= lit('(') >> -(mapPair % ',') >> lit(')');
+		mapObj %= lit('(') >> -(mapPair % ',') >> -lit(',') >> lit(')');
 		start %= mapPair % ';';
 
 #ifdef PARSER_DEBUG
@@ -249,7 +249,8 @@ void dumpMap(std::ostream &s, etfnode& n, unsigned int indent) {
 	std::map<std::string, etfnode>::iterator i;
 	s << "(\n";
 	for(i=m.begin();i != m.end();i++) {
-		s << ibuf_in << i->first << " = ";
+		s << ibuf_in;
+		s << i->first << " = ";
 		dumpNode(s, i->second, indent+1);
 		s << ",\n";
 	}
@@ -292,7 +293,13 @@ void ETFDocument::dump(std::ostream &s, bool formatted) {
 		karma::generate(sink, g, boost::get<std::map<std::string, etfnode> >(m_root.value));
 		s << gen;
 	} else {
-		dumpNode(s, m_root, 0);
+		std::map<std::string, etfnode> &m = boost::get<std::map<std::string, etfnode> >(m_root.value);
+		std::map<std::string, etfnode>::iterator i;
+		for(i=m.begin();i != m.end();i++) {
+			s << i->first << " = ";
+			dumpNode(s, i->second, 1);
+			s << ";\n";
+		}
 	}
 }
 
