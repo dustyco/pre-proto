@@ -276,7 +276,7 @@ void DisplayManager::_parseRes (std::string res, int& width, int& height) {
 }
 
 string DisplayManager::_getValidFSAA () {
-	string fsaa = m_config->getString("video:display/fsaa", "auto");
+	string fsaa = m_config->getString("video:graphics/fsaa", "auto");
 	if (fsaa.compare("auto") == 0) fsaa = "4";
 	
 	Ogre::StringVector possible = m_root->getRenderSystem()->getConfigOptions()["FSAA"].possibleValues;
