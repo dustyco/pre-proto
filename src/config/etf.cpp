@@ -18,7 +18,7 @@
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
 
-#define PARSER_DEBUG
+//#define PARSER_DEBUG
 
 using namespace boost;
 namespace qi = spirit::qi;
