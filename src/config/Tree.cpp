@@ -137,8 +137,8 @@ void ConfigManager::Tree::load (std::string path)
 				std::stringstream buffer;
 				buffer << file.rdbuf();
 				file.close();
-				WARNING("input data:");
-				std::cout << buffer.str();
+//				WARNING("input data:");
+//				std::cout << buffer.str();
 				m_docs[basename] = ETFDocument(buffer.str());
 			} catch (std::exception) {}
 	} catch (std::exception e) { WARNING(e.what()); }

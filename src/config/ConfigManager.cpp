@@ -19,6 +19,8 @@ namespace po = boost::program_options;
 #include "../logging/logging.h"
 #include "ConfigManager.h"
 
+//#define DEBUG_CONFIG
+
 
 ConfigManager::ConfigManager (int argc, char** argv)
 {
@@ -47,29 +49,18 @@ ConfigManager::ConfigManager (int argc, char** argv)
 		if (vm.count("help")) std::cout << desc << "\n";
 		if (vm.count("set")) {
 			PRINT("config param: " + vm["set"].as<std::string>());
+			// m_p is the parameter tree - it overrides m_d but won't be saved and will be written through with set()'s
 			m_p.set(vm["set"].as<std::string>(), ETFDocument::etfnode(std::string("on")));
 		}
 	}
 */
 	load();
-	WARNING("post-load report:");
-	m_d.report();
-	std::cout << "test/key = " << getInt("test/key", 4l) << "\n";
-	WARNING("post-set report:");
-	m_d.report();
 }
 ConfigManager::~ConfigManager ()
 {
 	if (m_save_on_destroy) {
 		try {
-//			INFO("Automatically saving configuration");
-/*			CRITICAL("// REPORT /////////////////////////////////////////////////////////");
-			WARNING("parameters:");
-			m_p.report();
-			WARNING("directory:");
-			m_d.report();
-			CRITICAL("///////////////////////////////////////////////////////////////////");
-*/			save();
+			save();
 		} catch (std::runtime_error e) {
 			WARNING(std::string("Failed to save configuration: ") + e.what());
 		}
@@ -125,9 +116,21 @@ void ConfigManager::load ()
 			}
 		}
 	}
+	
+	#ifdef DEBUG_CONFIG
+		WARNING("--Post-load configuration report----------------------------------");
+		m_d.report();
+		WARNING("------------------------------------------------------------------");
+	#endif
 }
 void ConfigManager::save ()
 {
+	#ifdef DEBUG_CONFIG
+		WARNING("--Pre-save configuration report-----------------------------------");
+		m_d.report();
+		WARNING("------------------------------------------------------------------");
+	#endif
+	
 	std::string dir(".");
 	if (m_user_before_game) {
 		try {
