@@ -19,8 +19,6 @@ namespace po = boost::program_options;
 #include "../logging/logging.h"
 #include "ConfigManager.h"
 
-//#define DEBUG_CONFIG
-
 
 ConfigManager::ConfigManager (int argc, char** argv)
 {
@@ -117,7 +115,7 @@ void ConfigManager::load ()
 		}
 	}
 	
-	#ifdef DEBUG_CONFIG
+	#ifdef REPORT_CONFIG
 		WARNING("--Post-load configuration report----------------------------------");
 		m_d.report();
 		WARNING("------------------------------------------------------------------");
@@ -125,7 +123,7 @@ void ConfigManager::load ()
 }
 void ConfigManager::save ()
 {
-	#ifdef DEBUG_CONFIG
+	#ifdef REPORT_CONFIG
 		WARNING("--Pre-save configuration report-----------------------------------");
 		m_d.report();
 		WARNING("------------------------------------------------------------------");

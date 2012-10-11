@@ -20,6 +20,9 @@
 #define CONFIG_FILE_EXT ".cfg"
 #define SAVE_ON_DESTROY true
 
+// Uncomment to show post-load/pre-save config values
+//#define REPORT_CONFIG
+
 
 class ConfigManager {
 public:
