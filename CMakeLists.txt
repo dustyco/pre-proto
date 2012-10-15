@@ -182,7 +182,7 @@ install(TARGETS
 	RUNTIME DESTINATION .
 	)
 install(DIRECTORY
-	${CMAKE_SOURCE_DIR}/dist/media
+	${CMAKE_SOURCE_DIR}/media
 	DESTINATION .
 	)
 
