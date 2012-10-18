@@ -70,7 +70,7 @@ void ConfigManager::load ()
 {
 	// Clear any existing settings
 	m_p = Tree();
-	m_p = Tree();
+	m_d = Tree();
 	
 	std::string dir(".");
 	if (m_user_before_game) {
