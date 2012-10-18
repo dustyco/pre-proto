@@ -7,7 +7,7 @@ using namespace Logging;
 
 LogManager::LogManager() {
 	// Set up the Ogre logging system and link it to my logging system
-	m_minLvl = INFO;
+	m_minLvl = LL_INFO;
 }
 
 LogManager::~LogManager() {

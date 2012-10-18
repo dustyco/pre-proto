@@ -30,12 +30,12 @@ int main (int argc, char** argv)
 	} catch (runtime_error& e) {
 		cerr << "Uncaught Runtime Error: " << e.what() << endl;
 		#ifdef WIN32
-			MessageBox(NULL, e.getFullDescription().c_str(), "Uncaught Runtime Error!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			MessageBox(NULL, e.what(), "Uncaught Runtime Error!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 		#endif
 	} catch (exception& e) {
 		cerr << "Uncaught Exception: " << e.what() << endl;
 		#ifdef WIN32
-			MessageBox(NULL, e.getFullDescription().c_str(), "Uncaught Exception!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			MessageBox(NULL, e.what(), "Uncaught Exception!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 		#endif
 	}
 

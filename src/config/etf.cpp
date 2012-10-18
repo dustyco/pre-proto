@@ -238,8 +238,10 @@ void dumpNode(std::ostream &s, etfnode& n, unsigned int indent) {
 }
 
 void dumpMap(std::ostream &s, etfnode& n, unsigned int indent) {
-	char ibuf[indent+1];
-	char ibuf_in[indent+2];
+//	char ibuf[indent+1];
+//	char ibuf_in[indent+2];
+	char* ibuf = new char[indent+1];
+	char* ibuf_in = new char[indent+2];
 	memset(ibuf, 0, indent+1);
 	memset(ibuf_in, 0, indent+2);
 	memset(ibuf, '\t', indent);
@@ -255,11 +257,15 @@ void dumpMap(std::ostream &s, etfnode& n, unsigned int indent) {
 		s << ",\n";
 	}
 	s << ibuf << ")";
+	delete[] ibuf;
+	delete[] ibuf_in;
 }
 
 void dumpList(std::ostream &s, etfnode& n, unsigned int indent) {
-	char ibuf[indent+1];
-	char ibuf_in[indent+2];
+//	char ibuf[indent+1];
+//	char ibuf_in[indent+2];
+	char* ibuf = new char[indent+1];
+	char* ibuf_in = new char[indent+2];
 	memset(ibuf, 0, indent+1);
 	memset(ibuf_in, 0, indent+2);
 	memset(ibuf, '\t', indent);
@@ -274,6 +280,8 @@ void dumpList(std::ostream &s, etfnode& n, unsigned int indent) {
 		s << ",\n";
 	}
 	s << ibuf << '}';
+	delete[] ibuf;
+	delete[] ibuf_in;
 }
 
 void dumpPair(std::ostream &s, etfnode& n, unsigned int indent) {

@@ -8,7 +8,7 @@
 
 void Application::init (int argc, char **argv) {
 	m_log = Logging::LogManager::getInstance();
-	m_log->addLogger(new Logging::ConsoleLogger(), Logging::DEBUG);
+	m_log->addLogger(new Logging::ConsoleLogger(), Logging::LL_DEBUG);
 
 	// In order to avoid Ogre's default logging behavior we have to create
 	// the Ogre::LogManager before initializing the Root object.
@@ -88,8 +88,8 @@ void Application::shutdown () {
 	m_root->shutdown();
 	delete m_config;
 	
-	LOG(Logging::TELETYPE, "GET ME THOSE CHINESE LANGUAGE FILES I ASKED FOR");
-	LOG(Logging::TELETYPE, "END OF LINE");
+	LOG(Logging::LL_TELETYPE, "GET ME THOSE CHINESE LANGUAGE FILES I ASKED FOR");
+	LOG(Logging::LL_TELETYPE, "END OF LINE");
 }
 
 // Early start on cpu-based updates
@@ -114,9 +114,9 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 	float aspect = (float)(m_display->getRenderWindow()->getWidth()) / m_display->getRenderWindow()->getHeight();
 	
 	// Rotate the camera
-	m_camNode->setPosition( Ogre::Vector3(sin(time)*70, cos(time*3.14159)*10, cos(time)*70) );
+	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*70, cos((float)time*3.14159f)*10, cos((float)time)*70) );
 	m_camNode->setPosition( Ogre::Vector3(0, 0,50) );
-	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, sin(time*3.14)*5, cos(time)*50) );
+	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*50, sin((float)time*3.14159f)*5, cos((float)time)*50) );
 //	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, 0,50) );
 	m_camera->lookAt(Ogre::Vector3(0,0,0));
 	m_camera->setAspectRatio(aspect);

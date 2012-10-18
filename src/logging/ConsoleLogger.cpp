@@ -55,16 +55,16 @@ ConsoleLogger::~ConsoleLogger() {
 void ConsoleLogger::logMessage(LogLevel lvl, std::string message) {
 	if(m_colors) {
 		Color fg = WHITE;
-		if(lvl == DEBUG) fg = BLUE;
-		else if(lvl == INFO) fg = CYAN;
-		else if(lvl == WARNING) fg = YELLOW;
-		else if(lvl == ERROR) fg = MAGENTA;
-		else if(lvl == CRITICAL) fg = RED;
-		else if(lvl == TELETYPE) fg = GREEN;
+		if(lvl == LL_DEBUG) fg = BLUE;
+		else if(lvl == LL_INFO) fg = CYAN;
+		else if(lvl == LL_WARNING) fg = YELLOW;
+		else if(lvl == LL_ERROR) fg = MAGENTA;
+		else if(lvl == LL_CRITICAL) fg = RED;
+		else if(lvl == LL_TELETYPE) fg = GREEN;
 		setColor(fg, BRIGHT);
 	}
 
-	if(lvl == TELETYPE) {
+	if(lvl == LL_TELETYPE) {
 		setColor(GREEN, BLACK, BRIGHT);
 		char* msgChars = (char*)message.c_str();
 		char* ptr = msgChars;
@@ -82,12 +82,12 @@ void ConsoleLogger::logMessage(LogLevel lvl, std::string message) {
 
 	// Get the level name
 	const char* levelName = NULL;
-	if(lvl == DEBUG) levelName = "DEBUG";
-	else if(lvl == INFO) levelName = "INFO";
-	else if(lvl == WARNING) levelName = "WARNING";
-	else if(lvl == ERROR) levelName = "ERROR";
-	else if(lvl == CRITICAL) levelName = "CRITICAL";
-	else if(lvl == PRINT) levelName = "OUTPUT";
+	if(lvl == LL_DEBUG) levelName = "DEBUG";
+	else if(lvl == LL_INFO) levelName = "INFO";
+	else if(lvl == LL_WARNING) levelName = "WARNING";
+	else if(lvl == LL_ERROR) levelName = "ERROR";
+	else if(lvl == LL_CRITICAL) levelName = "CRITICAL";
+	else if(lvl == LL_PRINT) levelName = "OUTPUT";
 	
 	// Get the time string
 	char timeBuf[64];

@@ -1,5 +1,5 @@
-add_subdirectory(entities)
+#add_subdirectory(entities)
 
-add_sources(GameWorld.cpp)
-propagate_libs()
+#add_sources(GameWorld.cpp)
+#propagate_libs()
 

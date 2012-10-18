@@ -2,6 +2,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef WIN32 
+	#define snprintf sprintf_s
+#endif
+
 char* hexify(char* buf, size_t len) {
 	size_t l = len*2+1;
 	char* out = (char*)malloc(l);

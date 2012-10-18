@@ -4,13 +4,13 @@
 
 namespace Logging {
 	enum LogLevel {
-		DEBUG=0,
-		INFO=1,
-		WARNING=2,
-		ERROR=3,
-		CRITICAL=4,
-		PRINT=5,
-		TELETYPE=6
+		LL_DEBUG=0,
+		LL_INFO=1,
+		LL_WARNING=2,
+		LL_ERROR=3,
+		LL_CRITICAL=4,
+		LL_PRINT=5,
+		LL_TELETYPE=6
 	};
 
 	// Abstract base class of all logger objects
@@ -24,7 +24,7 @@ namespace Logging {
 		static LogManager* getInstance();
 
 		void setMinLogLevel(LogLevel lvl);
-		void addLogger(Logger* l, LogLevel minLevel=DEBUG);
+		void addLogger(Logger* l, LogLevel minLevel=LL_DEBUG);
 
 		void logMessage(LogLevel lvl, std::string file, unsigned int line, std::string message, ...);
 
