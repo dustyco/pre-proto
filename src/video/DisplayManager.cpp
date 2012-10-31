@@ -14,6 +14,7 @@ DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
 	
 	m_config = config;
 	m_root = root;
+	m_closing = false;
 
 /*	// List rendersystem options
 	Ogre::RenderSystem* rs = m_root->getRenderSystem();

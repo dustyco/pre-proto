@@ -40,6 +40,11 @@ void Application::init (int argc, char **argv) {
 	m_display = new DisplayManager(m_config, m_root);
 	m_root->addFrameListener(this);
 	
+	// Set up CEGUI
+	m_display->lock();
+	m_cegui_renderer = &CEGUI::OgreRenderer::bootstrapSystem(*(m_display->getRenderWindow()));
+	m_display->unlock();
+	
 	// Set resource search paths
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media",                    "FileSystem", "General");
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/materials/scripts",  "FileSystem", "General");
@@ -96,20 +101,26 @@ void Application::shutdown () {
 // Input here will be up to 1 extra frame older than frameStarted
 bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt)
 {
+//	INFO("Application::frameRenderingQueued");
 	
 	return true;
 }
 // Normal frame start
 bool Application::frameStarted (const Ogre::FrameEvent& evt)
 {
+//	INFO("Application::frameStarted");
+	
 	double time = (double)timer.getMicroseconds()/1e6;
 	
 	// See if we should stop
-	if (m_display->isClosing()) running = false;
+	if (m_display->isClosing()) { INFO("Display is closing"); running = false; }
 	if (!running) return false;
 
 	
 	m_display->lock_shared();
+	
+//	INFO("got lock, starting to render");
+	
 	
 	float aspect = (float)(m_display->getRenderWindow()->getWidth()) / m_display->getRenderWindow()->getHeight();
 	

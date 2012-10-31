@@ -23,6 +23,18 @@ if (PROFILE)
 	endif ()
 endif ()
 
+
+# Some build type stuff #######################################################
+if (CMAKE_BUILD_TYPE STREQUAL "")
+	# CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
+	# differentiation between debug and release builds.
+	set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+set(CMAKE_DEBUG_POSTFIX "_d")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
+
+
+
 # Find ogre's cmake modules ###################################################
 if (WIN32)
 	message("OGRE_HOME: " $ENV{OGRE_HOME})
@@ -39,25 +51,21 @@ if(UNIX)
 	endif (EXISTS "/usr/local/lib/OGRE/cmake")
 endif (UNIX)
 
-
-
-# Some build type stuff #######################################################
-if (CMAKE_BUILD_TYPE STREQUAL "")
-	# CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
-	# differentiation between debug and release builds.
-	set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif()
-set(CMAKE_DEBUG_POSTFIX "_d")
-set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
-
-
-
-# Find ogre and ois ###########################################################
+# Find Ogre and OIS ###########################################################
 find_package(OGRE REQUIRED)
 find_package(OIS REQUIRED)
 if (NOT OIS_FOUND)
 	message(SEND_ERROR "Failed to find OIS.")
 endif ()
+
+
+# Find CEGUI ##################################################################
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR};${CMAKE_MODULE_PATH}")
+find_package(CEGUI REQUIRED COMPONENTS OGRE)
+if (NOT CEGUI_FOUND)
+	message(SEND_ERROR "Failed to find CEGUI.")
+endif ()
+include_directories(${CEGUI_INCLUDE_DIR})
 
 
 
@@ -157,7 +165,7 @@ add_executable(${CMAKE_PROJECT_NAME} WIN32 ${preproto_SRC})
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES DEBUG_POSTFIX _d)
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${OGRE_LIBRARIES} ${OIS_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${CEGUI_LIBRARY})
 
 # Add propagated libraries
 foreach (_lib ${preproto_USERLIBS})

@@ -2,6 +2,8 @@
 
 
 #include <OGRE/Ogre.h>
+#include <CEGUI.h>
+#include <CEGUIOgreRenderer.h>
 
 #include "logging/logging.h"
 #include "config/config.h"
@@ -41,6 +43,8 @@ private:
 	Ogre::Camera*       m_camera;
 	Ogre::SceneNode*    m_camNode;
 	Ogre::Viewport*     m_viewport;
+	
+	CEGUI::OgreRenderer* m_cegui_renderer;
 	
 	Ogre::Timer timer;
 	bool running;
