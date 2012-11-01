@@ -12,6 +12,11 @@ add_subdirectory(video)
 add_sources(client main.cpp Application.cpp)
 
 # Add library names to groups
+require_libraries(client
+	${OGRE_LIBRARIES}
+	${OIS_LIBRARIES}
+	${CEGUI_LIBRARY}
+	)
 if(UNIX)
 	require_libraries(client pthread)
 endif()

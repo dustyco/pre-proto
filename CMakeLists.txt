@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(pre-proto)
+project(pre-proto CXX)
 
 # Hide a a strange bug where ogre and boost headers explode with warnings
 if (MSVC)
@@ -32,83 +32,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
 endif()
 set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
-
-
-
-# Find ogre's cmake modules ###################################################
-if (WIN32)
-	message("OGRE_HOME: " $ENV{OGRE_HOME})
-	set(CMAKE_MODULE_PATH "$ENV{OGRE_HOME}/CMake/;${CMAKE_MODULE_PATH}")
-endif (WIN32)
-
-if(UNIX)
-	if (EXISTS "/usr/local/lib/OGRE/cmake")
-		set(CMAKE_MODULE_PATH "/usr/local/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
-	elseif (EXISTS "/usr/lib/OGRE/cmake")
-		set(CMAKE_MODULE_PATH "/usr/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
-	else ()
-		message(SEND_ERROR "Failed to find module path.")
-	endif (EXISTS "/usr/local/lib/OGRE/cmake")
-endif (UNIX)
-
-# Find Ogre and OIS ###########################################################
-find_package(OGRE REQUIRED)
-find_package(OIS REQUIRED)
-if (NOT OIS_FOUND)
-	message(SEND_ERROR "Failed to find OIS.")
-endif ()
-
-
-# Find CEGUI ##################################################################
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR};${CMAKE_MODULE_PATH}")
-find_package(CEGUI REQUIRED COMPONENTS OGRE)
-if (NOT CEGUI_FOUND)
-	message(SEND_ERROR "Failed to find CEGUI.")
-endif ()
-include_directories(${CEGUI_INCLUDE_DIR})
-
-
-
-# Find Boost ##################################################################
-if (WIN32 OR APPLE)
-	set(Boost_USE_STATIC_LIBS TRUE)
-else ()
-	# Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-	set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-endif ()
-
-# Components that need linking
-set(OGRE_BOOST_COMPONENTS thread date_time system)
-set(GAME_BOOST_COMPONENTS filesystem chrono program_options)
-
-# Decide where to look
-set(BOOST_ROOT_ENV $ENV{BOOST_ROOT})
-if (BOOST_ROOT_ENV)
-	# Get boost from a specifically defined folder
-	set(BOOST_ROOT $ENV{BOOST_ROOT})
-	message("BOOST_ROOT: " ${BOOST_ROOT})
-elseif (WIN32)
-	# Get boost from the ogre sdk
-	set(BOOST_ROOT $ENV{OGRE_HOME}/boost)
-	message("BOOST_ROOT: " ${BOOST_ROOT})
-endif ()
-
-# Find it
-find_package(Boost REQUIRED ${OGRE_BOOST_COMPONENTS} ${GAME_BOOST_COMPONENTS})
-if (NOT Boost_FOUND)
-	# Try again with the other type of libs
-	message("Boost wasn't found, trying again with the other link type")
-	set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-	find_package(Boost REQUIRED COMPONENTS ${OGRE_BOOST_COMPONENTS} ${GAME_BOOST_COMPONENTS})
-	if (NOT Boost_FOUND)
-		message(SEND_ERROR "Failed to find Boost.")
-	endif ()
-endif ()
-
-# Set up referencing of Boost
-include_directories(${Boost_INCLUDE_DIR})
-add_definitions(-DBOOST_ALL_NO_LIB)
-set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 
 
 
@@ -157,14 +80,89 @@ macro(propagate_groups)
 	endif()
 endmacro()
 
+
+
+# Find Ogre ###########################################################
+# Locate its cmake modules
+if (WIN32)
+	message("OGRE_HOME: " $ENV{OGRE_HOME})
+	set(CMAKE_MODULE_PATH "$ENV{OGRE_HOME}/CMake/;${CMAKE_MODULE_PATH}")
+endif (WIN32)
+if(UNIX)
+	if (EXISTS "/usr/local/lib/OGRE/cmake")
+		set(CMAKE_MODULE_PATH "/usr/local/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
+	elseif (EXISTS "/usr/lib/OGRE/cmake")
+		set(CMAKE_MODULE_PATH "/usr/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
+	else ()
+		message(SEND_ERROR "Failed to find module path.")
+	endif (EXISTS "/usr/local/lib/OGRE/cmake")
+endif(UNIX)
+find_package(OGRE REQUIRED)
+if(NOT OGRE_FOUND)
+	message(SEND_ERROR "Failed to find Ogre.")
+endif()
+include_directories(${OGRE_INCLUDE_DIRS})
+
+# Find OIS ###########################################################
+find_package(OIS REQUIRED)
+if (NOT OIS_FOUND)
+	message(SEND_ERROR "Failed to find OIS.")
+endif ()
+include_directories(${OIS_INCLUDE_DIRS})
+
+# Find CEGUI ##################################################################
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR};${CMAKE_MODULE_PATH}")
+find_package(CEGUI REQUIRED COMPONENTS OGRE)
+if (NOT CEGUI_FOUND)
+	message(SEND_ERROR "Failed to find CEGUI.")
+endif ()
+include_directories(${CEGUI_INCLUDE_DIR})
+
+
+
+# Find Boost ##################################################################
+if (WIN32 OR APPLE)
+	set(Boost_USE_STATIC_LIBS TRUE)
+else ()
+	# Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
+	set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
+endif ()
+
+# Decide where to look
+set(BOOST_ROOT_ENV $ENV{BOOST_ROOT})
+if (BOOST_ROOT_ENV)
+	# Get boost from a specifically defined folder
+	set(BOOST_ROOT $ENV{BOOST_ROOT})
+	message("BOOST_ROOT: " ${BOOST_ROOT})
+elseif (WIN32)
+	# Get boost from the ogre sdk
+	set(BOOST_ROOT $ENV{OGRE_HOME}/boost)
+	message("BOOST_ROOT: " ${BOOST_ROOT})
+endif ()
+
+# Find it
+find_package(Boost REQUIRED)
+if (NOT Boost_FOUND)
+	# Try again with the other type of libs
+	message("Boost wasn't found, trying again with the other link type")
+	set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
+	find_package(Boost REQUIRED)
+	if (NOT Boost_FOUND)
+		message(SEND_ERROR "Failed to find Boost.")
+	endif ()
+endif ()
+
+# Set up referencing of Boost
+include_directories(${Boost_INCLUDE_DIR})
+add_definitions(-DBOOST_ALL_NO_LIB)
+set(OGRE_LIBRARIES ${OGRE_LIBRARIES} boost_thread boost_date_time boost_system)
+
+
+
 # Work through the source tree
 add_subdirectory(src)
 
-include_directories(
-	${OIS_INCLUDE_DIRS}
-	${OGRE_INCLUDE_DIRS}
-	${OGRE_SAMPLES_INCLUDEPATH}
-	)
+
 
 # Shared static library so we don't have to redundantly compile shared code
 #add_library(shared STATIC ${shared_SRC})
@@ -173,7 +171,6 @@ include_directories(
 set(CLIENT_EXECUTABLE ${CMAKE_PROJECT_NAME})
 add_executable(${CLIENT_EXECUTABLE} ${client_SRC})
 target_link_libraries(${CLIENT_EXECUTABLE} ${client_LIB}) # shared ${shared_LIB})
-target_link_libraries(${CLIENT_EXECUTABLE} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${CEGUI_LIBRARY})
 set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 
 # Game server executable
