@@ -9,6 +9,9 @@
 
 #include "Profile.h"
 
+// Yes, it should be named Profiler.h
+// No, it can't be because NTFS is an asshole
+
 namespace Profiling {
 	/* The core of the Paradox profiling system - a low-overhead way of tracking your code's
 	 * performance that can easily be disabled in release builds. The fundamental components
