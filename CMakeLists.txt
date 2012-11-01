@@ -112,47 +112,53 @@ set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 
 
 
-# Define a macro to setup the sources #########################################
-macro (add_sources)
+# Subdirectories can create source file groups
+# Usage: add_sources([group name] [source file name]...)
+#        After, call propagate_groups() once in each directory
+#        The variable [group name]_SRC will contain the source file paths
+macro(add_sources)
+	set(_arguments ${ARGN})
+	list(GET _arguments 0 _group)
+	list(REMOVE_AT _arguments 0)
+	list(APPEND _groups ${_group})
 	file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-	foreach(_src ${ARGN})
+	foreach(_src ${_arguments})
 		if(_relPath)
-			list(APPEND preproto_SRC "${_relPath}/${_src}")
+			list(APPEND ${_group}_SRC "${_relPath}/${_src}")
 		else()
-			list(APPEND preproto_SRC "${_src}")
+			list(APPEND ${_group}_SRC "${_src}")
 		endif()
 	endforeach()
+endmacro()
+
+# Subdirectories can create external library groups
+# Usage: require_libraries([group name] [library name]...)
+#        After, call propagate_groups() once in each directory
+#        The variable [group name]_LIB will contain the library names
+macro (require_libraries)
+	set(_arguments ${ARGN})
+	list(GET _arguments 0 _group)
+	list(REMOVE_AT _arguments 0)
+	list(APPEND _groups ${_group})
+	foreach(_lib ${_arguments})
+		list(APPEND ${_group}_LIB "${_lib}")
+	endforeach()
+endmacro()
+
+# Call this in each subdirectory AFTER all group related calls
+macro(propagate_groups)
+	file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
 	if(_relPath)
-		# Propagate to parent
-		set(preproto_SRC ${preproto_SRC} PARENT_SCOPE)
+		set(_groups ${_groups} PARENT_SCOPE)
+		foreach(_group ${_groups})
+			set(${_group}_SRC ${${_group}_SRC} PARENT_SCOPE)
+			set(${_group}_LIB ${${_group}_LIB} PARENT_SCOPE)
+		endforeach()
 	endif()
 endmacro()
 
-# Define a macro so submodules can require their own libraries. Use it like
-# target_link_libraries
-macro (require_libraries)
-	foreach(_lib ${ARGN})
-		list(APPEND preproto_USERLIBS "${_lib}")
-	endforeach()
-	set(preproto_USERLIBS ${preproto_USERLIBS} PARENT_SCOPE)
-endmacro()
-macro (propagate_libs)
-	set(preproto_USERLIBS ${preproto_USERLIBS} PARENT_SCOPE)
-endmacro()
-
-# Add sources and custom libraries
-set(preproto_SRC "")
+# Work through the source tree
 add_subdirectory(src)
-
-# Source files
-# set(HDRS
-# 	./BaseApplication.h
-# 	./TutorialApplication.h
-# 	)
-# set(SRCS
-# 	./BaseApplication.cpp
-# 	./TutorialApplication.cpp
-# 	)
 
 include_directories(
 	${OIS_INCLUDE_DIRS}
@@ -160,17 +166,20 @@ include_directories(
 	${OGRE_SAMPLES_INCLUDEPATH}
 	)
 
-#add_executable(${CMAKE_PROJECT_NAME} WIN32 ${HDRS} ${SRCS})
-add_executable(${CMAKE_PROJECT_NAME} WIN32 ${preproto_SRC})
+# Shared static library so we don't have to redundantly compile shared code
+#add_library(shared STATIC ${shared_SRC})
 
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES DEBUG_POSTFIX _d)
+# Game client executable
+set(CLIENT_EXECUTABLE ${CMAKE_PROJECT_NAME})
+add_executable(${CLIENT_EXECUTABLE} ${client_SRC})
+target_link_libraries(${CLIENT_EXECUTABLE} ${client_LIB}) # shared ${shared_LIB})
+target_link_libraries(${CLIENT_EXECUTABLE} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${CEGUI_LIBRARY})
+set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${CEGUI_LIBRARY})
-
-# Add propagated libraries
-foreach (_lib ${preproto_USERLIBS})
-	target_link_libraries(${CMAKE_PROJECT_NAME} ${_lib})
-endforeach ()
+# Game server executable
+#set(SERVER_EXECUTABLE ${CMAKE_PROJECT_NAME}_server)
+#add_executable(${SERVER_EXECUTABLE} ${server_SRC})
+#target_link_libraries(${SERVER_EXECUTABLE} ${server_LIB} shared ${shared_LIB})
 
 
 
@@ -183,16 +192,16 @@ if (MINGW OR UNIX)
 endif ()
 
 # Post-build copy for win32
-if (WIN32 AND NOT MINGW)
-	add_custom_command( TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
-		COMMAND if not exist .\\dist mkdir .\\dist )
-	add_custom_command( TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-		COMMAND copy \"$(TargetPath)\" .\\dist )
-endif ()
+#if (WIN32 AND NOT MINGW)
+#	add_custom_command( TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
+#		COMMAND if not exist .\\dist mkdir .\\dist )
+#	add_custom_command( TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+#		COMMAND copy \"$(TargetPath)\" .\\dist )
+#endif ()
 
 # Executables
 install(TARGETS
-	${CMAKE_PROJECT_NAME}
+	${CLIENT_EXECUTABLE}
 	RUNTIME DESTINATION .
 	)
 install(DIRECTORY

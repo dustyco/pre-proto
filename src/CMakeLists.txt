@@ -1,16 +1,20 @@
+
+
 add_subdirectory(config)
 add_subdirectory(util)
-add_subdirectory(profiler)
+#add_subdirectory(profiler)
 add_subdirectory(logging)
 add_subdirectory(input)
-add_subdirectory(game)
+#add_subdirectory(game)
 add_subdirectory(video)
 
-# Add our own sources
-add_sources(main.cpp Application.cpp)
+# Add source file names to groups
+add_sources(client main.cpp Application.cpp)
 
-# Propagate sub-libraries
-if (UNIX)
-	require_libraries(pthread)
-endif ()
+# Add library names to groups
+if(UNIX)
+	require_libraries(client pthread)
+endif()
 
+# Call last to pass group variables up to the parent
+propagate_groups()
