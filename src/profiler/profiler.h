@@ -1,4 +1,4 @@
-#include "Profiler.h"
+#include "ProfilerObj.h"
 
 #ifdef NOPROFILER
 
