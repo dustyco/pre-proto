@@ -140,13 +140,23 @@ elseif (WIN32)
 	message("BOOST_ROOT: " ${BOOST_ROOT})
 endif ()
 
+# Specify which linkable libraries we should find
+set(BOOST_COMPONENTS
+	thread
+	date_time
+	system
+	filesystem
+	program_options
+	chrono
+)
+
 # Find it
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 if (NOT Boost_FOUND)
 	# Try again with the other type of libs
 	message("Boost wasn't found, trying again with the other link type")
 	set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-	find_package(Boost REQUIRED)
+	find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 	if (NOT Boost_FOUND)
 		message(SEND_ERROR "Failed to find Boost.")
 	endif ()
@@ -155,7 +165,14 @@ endif ()
 # Set up referencing of Boost
 include_directories(${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_ALL_NO_LIB)
-set(OGRE_LIBRARIES ${OGRE_LIBRARIES} boost_thread boost_date_time boost_system)
+
+# Add the boost libraries ogre uses
+set(OGRE_LIBRARIES
+	${OGRE_LIBRARIES}
+	${Boost_THREAD_LIBRARY}
+	${Boost_DATE_TIME_LIBRARY}
+	${Boost_SYSTEM_LIBRARY}
+)
 
 
 
