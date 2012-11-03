@@ -201,15 +201,15 @@ set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)
 
-#if(MINGW OR UNIX)
+if(MINGW OR UNIX)
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/dist)
-#endif()
+endif()
 
 # Executables
-#install(TARGETS
-#	${CLIENT_EXECUTABLE}
-#	RUNTIME DESTINATION .
-#)
+install(TARGETS
+	${CLIENT_EXECUTABLE}
+	RUNTIME DESTINATION .
+)
 
 # Media
 install(DIRECTORY
@@ -224,19 +224,22 @@ if(WIN32)
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
 		${OGRE_PLUGIN_DIR_REL}/OIS.dll
+		DESTINATION .
+		CONFIGURATIONS Release RelWithDebInfo
+	)
+	install(FILES
+		${OGRE_PLUGIN_DIR_DBG}/OgreMain_d.dll
+		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
+		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
+		${OGRE_PLUGIN_DIR_DBG}/OIS_d.dll
+		DESTINATION .
+		CONFIGURATIONS Debug
+	)
+	install(FILES
 		${CEGUIDIR}/bin/CEGUIBase.dll
 		${CEGUIDIR}/bin/CEGUIOgreRenderer.dll
 		DESTINATION .
-#		CONFIGURATIONS Release RelWithDebInfo
 	)
-#	install(FILES
-#		${OGRE_PLUGIN_DIR_DBG}/OgreMain_d.dll
-#		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
-#		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
-#		${OGRE_PLUGIN_DIR_DBG}/OIS_d.dll
-#		DESTINATION .
-#		CONFIGURATIONS Debug
-#	)
 endif()
 if(UNIX)
 	list(GET OGRE_RenderSystem_GL_LIBRARIES 1 OGRE_RenderSystem_GL_LINK)
