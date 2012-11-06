@@ -26,6 +26,9 @@ endif()
 # Build type
 # Options: Debug, Release, RelWithDebInfo, MinSizeRel
 # Only Debug, Release on MSVC
+if(CMAKE_BUILD_TYPE SREQUAL "RelWithDebInfo")
+	set(CMAKE_BUILD_TYPE Release)
+endif()
 if(CMAKE_BUILD_TYPE STREQUAL "")
 	# CMake defaults to leaving CMAKE_BUILD_TYPE empty
 	if(UNIX)
@@ -125,11 +128,12 @@ endif()
 include_directories(${CEGUI_INCLUDE_DIR})
 
 # Find Bullet #################################################################
-find_package(Bullet REQUIRED)
-if(NOT BULLET_FOUND)
-	message(SEND_ERROR "Failed to find Bullet.")
-endif()
-include_directories(${BULLET_INCLUDE_DIRS})
+# Doesn't work on windows yet
+#find_package(Bullet REQUIRED)
+#if(NOT BULLET_FOUND)
+#	message(SEND_ERROR "Failed to find Bullet.")
+#endif()
+#include_directories(${BULLET_INCLUDE_DIRS})
 
 # Find Boost ##################################################################
 #if(WIN32 OR APPLE)
@@ -219,8 +223,12 @@ if(MSVC)
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		# Build to the [build]/[dist] folder
 		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/${DISTFOLDER}")
-		set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/${DISTFOLDER})
-		set_target_properties (${CLIENT_EXECUTABLE} PROPERTIES PREFIX "../")
+#		set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/${DISTFOLDER})
+#		set_target_properties (${CLIENT_EXECUTABLE} PROPERTIES PREFIX "../")
+		install(TARGETS
+			${CLIENT_EXECUTABLE}
+			RUNTIME DESTINATION .
+		)
 	else()
 		# Build to the normal msvc [build]/Debug folder
 		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/Debug")
@@ -261,9 +269,14 @@ if(WIN32)
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
 		${OGRE_PLUGIN_DIR_REL}/OIS.dll
 		DESTINATION .
-		CONFIGURATIONS Release RelWithDebInfo
+		CONFIGURATIONS Release
 	)
+	# For some reason MSVC links both release and debug ogre/ois dlls
 	install(FILES
+		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
+		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
+		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
+		${OGRE_PLUGIN_DIR_REL}/OIS.dll
 		${OGRE_PLUGIN_DIR_DBG}/OgreMain_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
