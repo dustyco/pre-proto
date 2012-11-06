@@ -23,15 +23,21 @@ if(PROFILE)
 	endif()
 endif()
 
-
-# Some build type stuff #######################################################
+# Build type
+# Options: Debug, Release, RelWithDebInfo, MinSizeRel
+# Only Debug, Release on MSVC
 if(CMAKE_BUILD_TYPE STREQUAL "")
-	# CMake defaults to leaving CMAKE_BUILD_TYPE empty. This screws up
-	# differentiation between debug and release builds.
-	set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
+	# CMake defaults to leaving CMAKE_BUILD_TYPE empty
+	if(UNIX)
+		set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
+	else()
+		set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release." FORCE)
+	endif()
+	message("Default build type: " ${CMAKE_BUILD_TYPE})
+else()
+	message("Chosen build type: " ${CMAKE_BUILD_TYPE})
 endif()
 set(CMAKE_DEBUG_POSTFIX "_d")
-set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dist")
 
 
 
@@ -82,7 +88,7 @@ endmacro()
 
 
 
-# Find Ogre ###########################################################
+# Find Ogre ###################################################################
 # Locate its cmake modules
 if(WIN32)
 	message("OGRE_HOME: " $ENV{OGRE_HOME})
@@ -103,7 +109,7 @@ if(NOT OGRE_FOUND)
 endif()
 include_directories(${OGRE_INCLUDE_DIRS})
 
-# Find OIS ###########################################################
+# Find OIS ####################################################################
 find_package(OIS REQUIRED)
 if(NOT OIS_FOUND)
 	message(SEND_ERROR "Failed to find OIS.")
@@ -118,15 +124,22 @@ if(NOT CEGUI_FOUND)
 endif()
 include_directories(${CEGUI_INCLUDE_DIR})
 
-
+# Find Bullet #################################################################
+find_package(Bullet REQUIRED)
+if(NOT BULLET_FOUND)
+	message(SEND_ERROR "Failed to find Bullet.")
+endif()
+include_directories(${BULLET_INCLUDE_DIRS})
 
 # Find Boost ##################################################################
-if(WIN32 OR APPLE)
-	set(Boost_USE_STATIC_LIBS TRUE)
-else()
-	# Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-	set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-endif()
+#if(WIN32 OR APPLE)
+#	set(Boost_USE_STATIC_LIBS TRUE)
+#else()
+#	# Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
+#	set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
+#endif()
+
+set(Boost_USE_STATIC_LIBS TRUE)
 
 # Decide where to look
 set(BOOST_ROOT_ENV $ENV{BOOST_ROOT})
@@ -198,18 +211,41 @@ set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 
 
 # File Installations ##########################################################
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)
-
-if(MINGW OR UNIX)
-	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/dist)
+# Release builds will end up in [build]/${DISTFOLDER} for easy packaging
+# MSVC debug builds will go in [build]/Debug so MSVC can find it
+# All other builds will just go in [build]
+set(DISTFOLDER ${CMAKE_PROJECT_NAME})
+if(MSVC)
+	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+		# Build to the [build]/[dist] folder
+		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/${DISTFOLDER}")
+		set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/${DISTFOLDER})
+		set_target_properties (${CLIENT_EXECUTABLE} PROPERTIES PREFIX "../")
+	else()
+		# Build to the normal msvc [build]/Debug folder
+		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/Debug")
+	endif()
+else()
+	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+		# Same as above
+		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/${DISTFOLDER}")
+		set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX})
+	else()
+		set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}")
+	endif()
 endif()
+#file(RELATIVE_PATH CMAKE_INSTALL_PREFIX_REL "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_INSTALL_PREFIX}")
+#set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES PREFIX ${CMAKE_INSTALL_PREFIX_REL}/)
+
+file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX})
+file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/media)
+
 
 # Executables
-install(TARGETS
-	${CLIENT_EXECUTABLE}
-	RUNTIME DESTINATION .
-)
+#install(TARGETS
+#	${CLIENT_EXECUTABLE}
+#	RUNTIME DESTINATION .
+#)
 
 # Media
 install(DIRECTORY
