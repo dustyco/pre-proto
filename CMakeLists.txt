@@ -213,13 +213,8 @@ set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 
 # File Installations ##########################################################
 
-
 #file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 #file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/media)
-
-
-
-
 
 if(MSVC)
 	# Media
@@ -262,12 +257,19 @@ if(MSVC)
 	)
 endif()
 if(UNIX)
-	set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/proto)
-	# Executables
-	install(TARGETS
-		${CLIENT_EXECUTABLE}
-		RUNTIME DESTINATION .
+	set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME})
+	set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX})
+	
+	# Media
+	install(DIRECTORY
+		${CMAKE_SOURCE_DIR}/media
+		DESTINATION .
 	)
+	# Executables
+#	install(TARGETS
+#		${CLIENT_EXECUTABLE}
+#		RUNTIME DESTINATION .
+#	)
 
 	list(GET OGRE_RenderSystem_GL_LIBRARIES 1 OGRE_RenderSystem_GL_LINK)
 	GET_FILENAME_COMPONENT(OGRE_RenderSystem_GL_FILE ${OGRE_RenderSystem_GL_LINK} REALPATH)
