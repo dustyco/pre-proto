@@ -26,9 +26,6 @@ endif()
 # Build type
 # Options: Debug, Release, RelWithDebInfo, MinSizeRel
 # Only Debug, Release on MSVC
-if(CMAKE_BUILD_TYPE SREQUAL "RelWithDebInfo")
-	set(CMAKE_BUILD_TYPE Release)
-endif()
 if(CMAKE_BUILD_TYPE STREQUAL "")
 	# CMake defaults to leaving CMAKE_BUILD_TYPE empty
 	if(UNIX)
@@ -215,64 +212,43 @@ set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 
 
 # File Installations ##########################################################
-# Release builds will end up in [build]/${DISTFOLDER} for easy packaging
-# MSVC debug builds will go in [build]/Debug so MSVC can find it
-# All other builds will just go in [build]
-set(DISTFOLDER ${CMAKE_PROJECT_NAME})
+
+
+#file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX})
+#file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/media)
+
+
+
+
+
 if(MSVC)
-	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		# Build to the [build]/[dist] folder
-		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/${DISTFOLDER}")
-#		set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/${DISTFOLDER})
-#		set_target_properties (${CLIENT_EXECUTABLE} PROPERTIES PREFIX "../")
-		install(TARGETS
-			${CLIENT_EXECUTABLE}
-			RUNTIME DESTINATION .
-		)
-	else()
-		# Build to the normal msvc [build]/Debug folder
-		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/Debug")
-	endif()
-else()
-	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		# Same as above
-		set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/${DISTFOLDER}")
-		set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX})
-	else()
-		set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}")
-	endif()
-endif()
-#file(RELATIVE_PATH CMAKE_INSTALL_PREFIX_REL "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_INSTALL_PREFIX}")
-#set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES PREFIX ${CMAKE_INSTALL_PREFIX_REL}/)
+	# Media
+	install(DIRECTORY
+		${CMAKE_SOURCE_DIR}/media
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
+		CONFIGURATIONS Release RelWithDebInfo
+	)
+	install(DIRECTORY
+		${CMAKE_SOURCE_DIR}/media
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
+		CONFIGURATIONS Debug
+	)
 
-file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX})
-file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/media)
-
-
-# Executables
-#install(TARGETS
-#	${CLIENT_EXECUTABLE}
-#	RUNTIME DESTINATION .
-#)
-
-# Media
-install(DIRECTORY
-	${CMAKE_SOURCE_DIR}/media
-	DESTINATION .
-)
-
-# Plugins
-if(WIN32)
+	# DLL and plugins
 	install(FILES
+		${CEGUIDIR}/bin/CEGUIBase.dll
+		${CEGUIDIR}/bin/CEGUIOgreRenderer.dll
 		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
 		${OGRE_PLUGIN_DIR_REL}/OIS.dll
-		DESTINATION .
-		CONFIGURATIONS Release
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
+		CONFIGURATIONS Release RelWithDebInfo
 	)
 	# For some reason MSVC links both release and debug ogre/ois dlls
 	install(FILES
+		${CEGUIDIR}/bin/CEGUIBase.dll
+		${CEGUIDIR}/bin/CEGUIOgreRenderer.dll
 		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
@@ -281,16 +257,18 @@ if(WIN32)
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/OIS_d.dll
-		DESTINATION .
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
 		CONFIGURATIONS Debug
-	)
-	install(FILES
-		${CEGUIDIR}/bin/CEGUIBase.dll
-		${CEGUIDIR}/bin/CEGUIOgreRenderer.dll
-		DESTINATION .
 	)
 endif()
 if(UNIX)
+	set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/proto)
+	# Executables
+	install(TARGETS
+		${CLIENT_EXECUTABLE}
+		RUNTIME DESTINATION .
+	)
+
 	list(GET OGRE_RenderSystem_GL_LIBRARIES 1 OGRE_RenderSystem_GL_LINK)
 	GET_FILENAME_COMPONENT(OGRE_RenderSystem_GL_FILE ${OGRE_RenderSystem_GL_LINK} REALPATH)
 	install(FILES
