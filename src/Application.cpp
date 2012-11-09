@@ -39,11 +39,17 @@ void Application::init (int argc, char **argv) {
 	// Initialize the display manager
 	m_display = new DisplayManager(m_config, m_root);
 	m_root->addFrameListener(this);
+
+	// Initialize input
+	m_input = new InputManager(m_root, m_display);
+	m_input->registerKeyListener(this);
 	
-	// Set up CEGUI
-	m_display->lock();
-	m_cegui_renderer = &CEGUI::OgreRenderer::bootstrapSystem(*(m_display->getRenderWindow()));
-	m_display->unlock();
+	// Initialize the GUI
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/schemes",      "FileSystem", "Schemes");
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/imagesets",    "FileSystem", "Imagesets");
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/fonts",        "FileSystem", "Fonts");
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/looknfeel",    "FileSystem", "LookNFeel");
+	m_gui = new GUIManager(m_display);
 	
 	// Set resource search paths
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media",                    "FileSystem", "General");
@@ -74,10 +80,6 @@ void Application::init (int argc, char **argv) {
 	m_sceneMgr->setAmbientLight(Ogre::ColourValue(0.1f, 0.1f, 0.1f));
 	Ogre::Light* light = m_sceneMgr->createLight("MainLight");
 	light->setPosition(20.0f, 80.0f, 50.0f);
-
-	// Set up input handling
-	m_input = new InputManager(m_display->getRenderWindow(), m_root);
-	m_input->registerKeyListener(this);
 
 	INFO("Proto initialized");
 }
@@ -146,6 +148,11 @@ bool Application::keyPressed (const OIS::KeyEvent& evt) {
 			if (m_display->getRenderWindow()->isFullScreen()) m_config->set("video:display/mode", "window");
 			else m_config->set("video:display/mode", "fullscreen");
 			m_display->applySettings();
+			break;
+		case OIS::KC_F1:
+			// Toggle mouse mode
+			if (m_input->getMouseFreedom()) m_input->setMouseFreedom(false);
+			else m_input->setMouseFreedom(true);
 			break;
 	} return true;
 }

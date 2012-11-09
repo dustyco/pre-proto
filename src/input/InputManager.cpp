@@ -5,29 +5,81 @@
 using namespace std;
 
 #include "InputManager.h"
+#include "../logging/logging.h"
 
 
-InputManager::InputManager(Ogre::RenderWindow* win, Ogre::Root* root) {
-	OIS::ParamList pl;
-	ostringstream ss;
+InputManager::InputManager (Ogre::Root* root, DisplayManager* display) {
+	lock();
+	
+	m_root = root;
+	m_display = display;
+	m_mouse_freedom = true;
+	m_reconnect = false;
+	_connect();
+	
+	unlock();
+}
+
+InputManager::~InputManager () {
+	lock();
+	_disconnect();
+	unlock();
+}
+	
+void InputManager::_connect () {
 	size_t winHandle = 0;
-	win->getCustomAttribute("WINDOW", &winHandle);
+	m_display->getRenderWindow()->getCustomAttribute("WINDOW", &winHandle);
+	ostringstream ss;
 	ss << winHandle;
-	pl.insert(make_pair(string("WINDOW"), ss.str()));
+	
+	OIS::ParamList pl;
+	pl.insert(std::make_pair("WINDOW", ss.str()));
+	
+	if (m_mouse_freedom) {
+		#if defined OIS_WIN32_PLATFORM
+			pl.insert(std::make_pair("w32_mouse",    "DISCL_FOREGROUND"));
+			pl.insert(std::make_pair("w32_mouse",    "DISCL_NONEXCLUSIVE"));
+			pl.insert(std::make_pair("w32_keyboard", "DISCL_FOREGROUND"));
+			pl.insert(std::make_pair("w32_keyboard", "DISCL_NONEXCLUSIVE"));
+		#elif defined OIS_LINUX_PLATFORM
+			pl.insert(std::make_pair("x11_mouse_grab",    "false"));
+			pl.insert(std::make_pair("x11_mouse_hide",    "false"));
+			pl.insert(std::make_pair("x11_keyboard_grab", "false"));
+			pl.insert(std::make_pair("XAutoRepeatOn",     "true"));
+		#endif
+	}
+	
 	m_inMgr = OIS::InputManager::createInputSystem(pl);
 	m_keybd = static_cast<OIS::Keyboard*> (m_inMgr->createInputObject(OIS::OISKeyboard, true));
 	m_mouse = static_cast<OIS::Mouse*> (m_inMgr->createInputObject(OIS::OISMouse, true));
 	m_keybd->setEventCallback(this);
 	m_mouse->setEventCallback(this);
-	
-	// Add a listener
-	root->addFrameListener(this);
+	m_root->addFrameListener(this);
 }
-
-InputManager::~InputManager() {
+void InputManager::_disconnect () {
+	m_keybd->setEventCallback(0);
+	m_mouse->setEventCallback(0);
 	m_inMgr->destroyInputObject(m_keybd);
 	m_inMgr->destroyInputObject(m_mouse);
 	OIS::InputManager::destroyInputSystem(m_inMgr);
+	m_keybd = 0;
+	m_mouse = 0;
+	m_root->removeFrameListener(this);
+}
+	
+bool InputManager::getMouseFreedom () {
+	lock();
+	bool mouse_freedom = m_mouse_freedom;
+	unlock();
+	return mouse_freedom;
+}
+void InputManager::setMouseFreedom (bool mouse_freedom) {
+	lock();
+	if (m_mouse_freedom != mouse_freedom) {
+		m_mouse_freedom = mouse_freedom;
+		m_reconnect = true;
+	}
+	unlock();
 }
 
 void InputManager::registerKeyListener(OIS::KeyListener* l) {
@@ -68,18 +120,20 @@ bool InputManager::isKeyPressed(OIS::KeyCode k) {
 // CALLBACKS //////////////////////////////////////////////////////////////////
 // FRAME LISTENER /////////////////////////////////////////////////////////////
 bool InputManager::frameRenderingQueued(const Ogre::FrameEvent &evt) {
-/*	m_mouse->capture();
-	m_keybd->capture();
-	m_mouseState = m_mouse->getMouseState();
-*/	
 	return true;
 }
 
 bool InputManager::frameStarted(const Ogre::FrameEvent &evt) {
+	lock();
 	m_mouse->capture();
 	m_keybd->capture();
 	m_mouseState = m_mouse->getMouseState();
-	
+	if (m_reconnect) {
+		m_reconnect = false;
+		_disconnect();
+		_connect();
+	}
+	unlock();
 	return true;
 }
 
@@ -91,7 +145,6 @@ bool InputManager::keyPressed(const OIS::KeyEvent& evt) {
 			m_keyListeners.erase(i);
 		}
 	}
-	
 	return true;
 }
 
@@ -102,7 +155,6 @@ bool InputManager::keyReleased(const OIS::KeyEvent& evt) {
 			m_keyListeners.erase(i);
 		}
 	}
-	
 	return true;
 }
 
@@ -115,7 +167,6 @@ bool InputManager::mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID b
 			m_mouseListeners.erase(i);
 		}
 	}
-	
 	return true;
 }
 
@@ -129,7 +180,6 @@ bool InputManager::mouseMoved(const OIS::MouseEvent& evt) {
 			m_mouseListeners.erase(i);
 		}
 	}
-	
 	return true;
 }
 
@@ -142,6 +192,5 @@ bool InputManager::mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID 
 			m_mouseListeners.erase(i);
 		}
 	}
-	
 	return true;
 }

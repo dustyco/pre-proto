@@ -2,13 +2,12 @@
 
 
 #include <OGRE/Ogre.h>
-#include <CEGUI.h>
-#include <CEGUIOgreRenderer.h>
 
 #include "logging/logging.h"
 #include "config/config.h"
 #include "video/video.h"
 #include "input/input.h"
+#include "gui/gui.h"
 
 #ifndef OGRE_PLUGIN_DIR
 #define OGRE_PLUGIN_DIR "."
@@ -37,14 +36,13 @@ private:
 	ConfigManager*       m_config;
 	DisplayManager*      m_display;
 	InputManager*        m_input;
+	GUIManager*          m_gui;
 
 	Ogre::Root*         m_root;
 	Ogre::SceneManager* m_sceneMgr;
 	Ogre::Camera*       m_camera;
 	Ogre::SceneNode*    m_camNode;
 	Ogre::Viewport*     m_viewport;
-	
-	CEGUI::OgreRenderer* m_cegui_renderer;
 	
 	Ogre::Timer timer;
 	bool running;

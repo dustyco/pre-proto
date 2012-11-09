@@ -1,18 +1,30 @@
 #pragma once
 
 
+#include <boost/thread/recursive_mutex.hpp>
 #include <OIS/OIS.h>
 #include <OGRE/Ogre.h>
+
+#include "../video/DisplayManager.h"
 
 
 class InputManager :
 	public Ogre::FrameListener,
 	public OIS::KeyListener,
-	public OIS::MouseListener
+	public OIS::MouseListener,
+	public boost::recursive_mutex
 {
 public:
-	InputManager (Ogre::RenderWindow* win, Ogre::Root* r);
+	InputManager (Ogre::Root* root, DisplayManager* display);
 	~InputManager ();
+	
+	void _connect ();
+	void _disconnect ();
+	
+	// TRUE:  Visible, absolute movement
+	// FALSE: Hidden, captured, relative movement
+	bool getMouseFreedom ();
+	void setMouseFreedom (bool);
 	
 	// EXTERNAL LISTENERS /////////////////////////////////////////////////////
 	void registerKeyListener   (OIS::KeyListener* l);
@@ -40,6 +52,11 @@ public:
 	bool frameStarted         (const Ogre::FrameEvent& evt);
 	
 private:
+	Ogre::Root*        m_root;
+	DisplayManager*    m_display;
+	bool               m_mouse_freedom;
+	bool               m_reconnect;
+	
 	std::list<OIS::KeyListener*>   m_keyListeners;
 	std::list<OIS::MouseListener*> m_mouseListeners;
 	
