@@ -5,8 +5,6 @@
 #include <OIS/OIS.h>
 #include <OGRE/Ogre.h>
 
-#include "../video/DisplayManager.h"
-
 
 class InputManager :
 	public Ogre::FrameListener,
@@ -15,7 +13,7 @@ class InputManager :
 	public boost::recursive_mutex
 {
 public:
-	InputManager (Ogre::Root* root, DisplayManager* display);
+	InputManager ();
 	~InputManager ();
 	
 	void _connect ();
@@ -52,8 +50,6 @@ public:
 	bool frameStarted         (const Ogre::FrameEvent& evt);
 	
 private:
-	Ogre::Root*        m_root;
-	DisplayManager*    m_display;
 	bool               m_mouse_freedom;
 	bool               m_reconnect;
 	

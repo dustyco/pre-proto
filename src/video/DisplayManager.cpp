@@ -6,14 +6,13 @@ using namespace std;
 
 #include "DisplayManager.h"
 #include "../logging/logging.h"
+#include "../util/singleton.h"
 
 
-DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
+DisplayManager::DisplayManager ()
 {
 	lock();
 	
-	m_config = config;
-	m_root = root;
 	m_closing = false;
 
 /*	// List rendersystem options
@@ -26,14 +25,14 @@ DisplayManager::DisplayManager (ConfigManager* config, Ogre::Root* root)
 	}
 */	
 	// Don't create the window automatically - use the method below
-	m_root->initialise(false);
+	ref<Ogre::Root>().initialise(false);
 	
 	// Create a dummy window so ogre doesn't shit itself when the
 	// main window gets recreated
 	Ogre::NameValuePairList misc_dummy;
 	misc_dummy["vsync"] = "true";
 	misc_dummy["hidden"] = "true";
-	m_dummyWindow = m_root->createRenderWindow("PROTO DUMMY", 1, 1, false, &misc_dummy);
+	m_dummyWindow = ref<Ogre::Root>().createRenderWindow("PROTO DUMMY", 1, 1, false, &misc_dummy);
 	
 	// Create main window
 	_initWindow();
@@ -81,7 +80,7 @@ void DisplayManager::applySettings ()
 void DisplayManager::reinitWindow () {
 	lock();
 	
-	m_root->destroyRenderTarget(m_renderWindow);
+	ref<Ogre::Root>().destroyRenderTarget(m_renderWindow);
 	_initWindow();
 	
 	unlock();
@@ -124,22 +123,23 @@ void DisplayManager::windowMoved (Ogre::RenderWindow* rw) {
 		rw->getMetrics(d, d, d, x, y);
 		stringstream pos; pos << x << 'x' << y;
 //		INFO("windowMoved() %s", pos.str().c_str());
-		m_config->set("video:display/window_pos", pos.str());
+		ref<ConfigManager>().set("video:display/window_pos", pos.str());
 	}
 	unlock();
 }
 void DisplayManager::windowResized (Ogre::RenderWindow* rw) {
 	lock();
+	REF(ConfigManager, config);
 	if (!m_resized) { m_resized = true; unlock(); return; }
 	stringstream res; res << rw->getWidth() << 'x' << rw->getHeight();
 //	INFO("windowResized() %s", res.str().c_str());
-	if (rw->isFullScreen()) m_config->set("video:display/fullscreen_res", res.str());
+	if (rw->isFullScreen()) config.set("video:display/fullscreen_res", res.str());
 	else {
 		unsigned int d; int x, y;
 		rw->getMetrics(d, d, d, x, y);
 		stringstream pos; pos << x << 'x' << y;
-		m_config->set("video:display/window_pos", pos.str());
-		m_config->set("video:display/window_res", res.str());
+		config.set("video:display/window_pos", pos.str());
+		config.set("video:display/window_res", res.str());
 	}
 	unlock();
 }
@@ -176,7 +176,7 @@ void DisplayManager::_initWindow ()
 	for (Ogre::NameValuePairList::iterator it = misc.begin(); it!=misc.end(); it++)
 		cout << (*it).first << " = " << (*it).second << endl;
 */	
-	m_renderWindow = m_root->createRenderWindow(
+	m_renderWindow = ref<Ogre::Root>().createRenderWindow(
 		WINDOW_TITLE,
 		width,
 		height,
@@ -189,34 +189,36 @@ void DisplayManager::_reinitWindow () {
 	CRITICAL("DisplayManager::_reinitWindow(): THIS SHOULDN'T BE USED - IT DOESN'T WORK");
 	
 //	m_renderWindow->destroy();
-	m_root->destroyRenderTarget(m_renderWindow);
+	ref<Ogre::Root>().destroyRenderTarget(m_renderWindow);
 	_initWindow();
 }
 void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Ogre::NameValuePairList& misc)
 {
+	REF(ConfigManager, config);
+	
 	fullscreen = DEFAULT_FULLSCREEN;
-	string mode = m_config->getString("video:display/mode", "auto");
+	string mode = config.getString("video:display/mode", "auto");
 	     if (mode.compare("fullscreen") == 0) fullscreen = true;
 	else if (mode.compare("window")     == 0) fullscreen = false;
-	else if (mode.compare("auto")       != 0) m_config->set("video:display/mode", "auto");
+	else if (mode.compare("auto")       != 0) config.set("video:display/mode", "auto");
 	
 	if (fullscreen) {
 		// Get the resolution string from configmanager
-		_parseRes(m_config->getString("video:display/fullscreen_res", "auto"), width, height);
+		_parseRes(config.getString("video:display/fullscreen_res", "auto"), width, height);
 		// See if it's sane
 		if (!_isValidRes(width, height)) {
 			// It's not
-			m_config->set("video:display/fullscreen_res", "auto");
+			config.set("video:display/fullscreen_res", "auto");
 			_getBestRes(width, height);
 		}
 	} else {
 		// Get the resolution string from configmanager
-		_parseRes(m_config->getString("video:display/window_res", "auto"), width, height);
+		_parseRes(config.getString("video:display/window_res", "auto"), width, height);
 		// See if it's sane
 		int max_w, max_h; _getBestRes(max_w, max_h);
 		if (!(width>0 && height>0 && width<=max_w && height<=max_h)) {
 			// It's not
-			m_config->set("video:display/window_res", "auto");
+			config.set("video:display/window_res", "auto");
 			width = max_w;
 			height = max_h;
 		}
@@ -227,7 +229,7 @@ void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Og
 	misc["FSAA"] = _getValidFSAA();
 	
 	// vsync
-	misc["vsync"] = ((m_config->getBool("video:display/vsync", DEFAULT_VSYNC))?"true":"false");
+	misc["vsync"] = ((config.getBool("video:display/vsync", DEFAULT_VSYNC))?"true":"false");
 	// TODO vsyncInterval
 //	misc["vsyncInterval"] = "2";
 	
@@ -237,7 +239,7 @@ void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Og
 }
 void DisplayManager::_getBestRes (int& width, int& height) {
 	int best = 0;
-	Ogre::StringVector possible = m_root->getRenderSystem()->getConfigOptions()["Video Mode"].possibleValues;
+	Ogre::StringVector possible = ref<Ogre::Root>().getRenderSystem()->getConfigOptions()["Video Mode"].possibleValues;
 	for (Ogre::StringVector::iterator it = possible.begin(); it != possible.end(); it++) {
 		int w, h; _parseRes(*it, w, h);
 		if (w*h >= best) {
@@ -250,7 +252,7 @@ void DisplayManager::_getBestRes (int& width, int& height) {
 // See if these dimensions match any of those in the rendersystem's valid resolutions list
 bool DisplayManager::_isValidRes (int width, int height) {
 //	INFO("_isValidRes(%d, %d)", width, height);
-	Ogre::StringVector possible = m_root->getRenderSystem()->getConfigOptions()["Video Mode"].possibleValues;
+	Ogre::StringVector possible = ref<Ogre::Root>().getRenderSystem()->getConfigOptions()["Video Mode"].possibleValues;
 	for (Ogre::StringVector::iterator it = possible.begin(); it != possible.end(); it++) {
 		int w, h; _parseRes(*it, w, h);
 //		INFO("Compare: %d?=%d x %d?=%d", w, width, h, height);
@@ -277,10 +279,10 @@ void DisplayManager::_parseRes (std::string res, int& width, int& height) {
 }
 
 string DisplayManager::_getValidFSAA () {
-	string fsaa = m_config->getString("video:graphics/fsaa", "auto");
+	string fsaa = ref<ConfigManager>().getString("video:graphics/fsaa", "auto");
 	if (fsaa.compare("auto") == 0) fsaa = "4";
 	
-	Ogre::StringVector possible = m_root->getRenderSystem()->getConfigOptions()["FSAA"].possibleValues;
+	Ogre::StringVector possible = ref<Ogre::Root>().getRenderSystem()->getConfigOptions()["FSAA"].possibleValues;
 	for (Ogre::StringVector::iterator it = possible.begin(); it != possible.end(); it++)
 		if ((*it) == fsaa) return fsaa;
 

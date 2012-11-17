@@ -7,12 +7,10 @@
 #include <CEGUIOgreRenderer.h>
 #include <CEGUIDefaultResourceProvider.h>
 
-#include "../video/DisplayManager.h"
-
 
 class GUIManager {
 public:
-	GUIManager (DisplayManager* display);
+	GUIManager  ();
 	~GUIManager ();
 	
 private:

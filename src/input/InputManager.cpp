@@ -4,15 +4,16 @@
 #include <iostream>
 using namespace std;
 
-#include "InputManager.h"
 #include "../logging/logging.h"
+#include "../util/singleton.h"
+#include "../video/DisplayManager.h"
+
+#include "InputManager.h"
 
 
-InputManager::InputManager (Ogre::Root* root, DisplayManager* display) {
+InputManager::InputManager () {
 	lock();
 	
-	m_root = root;
-	m_display = display;
 	m_mouse_freedom = true;
 	m_reconnect = false;
 	_connect();
@@ -28,7 +29,7 @@ InputManager::~InputManager () {
 	
 void InputManager::_connect () {
 	size_t winHandle = 0;
-	m_display->getRenderWindow()->getCustomAttribute("WINDOW", &winHandle);
+	ref<DisplayManager>().getRenderWindow()->getCustomAttribute("WINDOW", &winHandle);
 	ostringstream ss;
 	ss << winHandle;
 	
@@ -54,7 +55,7 @@ void InputManager::_connect () {
 	m_mouse = static_cast<OIS::Mouse*> (m_inMgr->createInputObject(OIS::OISMouse, true));
 	m_keybd->setEventCallback(this);
 	m_mouse->setEventCallback(this);
-	m_root->addFrameListener(this);
+	ref<Ogre::Root>().addFrameListener(this);
 }
 void InputManager::_disconnect () {
 	m_keybd->setEventCallback(0);
@@ -64,7 +65,7 @@ void InputManager::_disconnect () {
 	OIS::InputManager::destroyInputSystem(m_inMgr);
 	m_keybd = 0;
 	m_mouse = 0;
-	m_root->removeFrameListener(this);
+	ref<Ogre::Root>().removeFrameListener(this);
 }
 	
 bool InputManager::getMouseFreedom () {

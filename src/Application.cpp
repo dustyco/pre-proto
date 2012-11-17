@@ -3,6 +3,12 @@
 #include <sstream>
 #include <math.h>
 
+#include "util/singleton.h"
+#include "config/config.h"
+#include "video/video.h"
+#include "input/input.h"
+#include "gui/gui.h"
+
 #include "Application.h"
 
 
@@ -18,38 +24,38 @@ void Application::init (int argc, char **argv) {
 	ogreLogMgr->setLogDetail(Ogre::LL_LOW);
 	
 	// Initialize the configuration system
-	m_config = new ConfigManager(argc, argv);
+	set<ConfigManager>(new ConfigManager(argc, argv));
 
 	// Initialize the Ogre root
-	m_root = new Ogre::Root("", "", "");
+	set<Ogre::Root>(new Ogre::Root("", "", ""));
+	REF(Ogre::Root, ogre_root);
 	
 	// Load Ogre plugins
 	#ifndef OGRE_PLUGIN_DIR
 	#define OGRE_PLUGIN_DIR "."
 	#endif
 	#ifdef _WIN32
-		m_root->loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_Direct3D9");
-		Ogre::RenderSystem* rs = m_root->getRenderSystemByName("Direct3D9 Rendering Subsystem");
+		ogre_root.loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_Direct3D9");
+		Ogre::RenderSystem* rs = ogre_root.getRenderSystemByName("Direct3D9 Rendering Subsystem");
 	#else
-		m_root->loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_GL");
-		Ogre::RenderSystem* rs = m_root->getRenderSystemByName("OpenGL Rendering Subsystem");
+		ogre_root.loadPlugin(OGRE_PLUGIN_DIR "/RenderSystem_GL");
+		Ogre::RenderSystem* rs = ogre_root.getRenderSystemByName("OpenGL Rendering Subsystem");
 	#endif
-	m_root->setRenderSystem(rs);
+	ogre_root.setRenderSystem(rs);
+	ogre_root.addFrameListener(this);
 	
 	// Initialize the display manager
-	m_display = new DisplayManager(m_config, m_root);
-	m_root->addFrameListener(this);
+	set<DisplayManager>();
 
-	// Initialize input
-	m_input = new InputManager(m_root, m_display);
-	m_input->registerKeyListener(this);
+	// Initialize input and add a listener
+	set<InputManager>().registerKeyListener(this);
 	
-	// Initialize the GUI
+	// Create CEGUI resource groups and initialize the gui
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/schemes",      "FileSystem", "Schemes");
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/imagesets",    "FileSystem", "Imagesets");
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/fonts",        "FileSystem", "Fonts");
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/looknfeel",    "FileSystem", "LookNFeel");
-	m_gui = new GUIManager(m_display);
+	set<GUIManager>();
 	
 	// Set resource search paths
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media",                    "FileSystem", "General");
@@ -59,7 +65,7 @@ void Application::init (int argc, char **argv) {
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
 	// Set up scene and camera
-	m_sceneMgr = m_root->createSceneManager(Ogre::ST_GENERIC, "SceneMgr");
+	m_sceneMgr = ogre_root.createSceneManager(Ogre::ST_GENERIC, "SceneMgr");
 	m_camera = m_sceneMgr->createCamera("Camera");
 	m_camNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode();
 	m_camNode->attachObject(m_camera);
@@ -69,7 +75,7 @@ void Application::init (int argc, char **argv) {
 	m_camera->setNearClipDistance(1);
 	
 	// This will have to be reinitialized if the window is recreated for FSAA changes (it's not right now)
-	m_viewport = m_display->getRenderWindow()->addViewport(m_camera);
+	m_viewport = ref<DisplayManager>().getRenderWindow()->addViewport(m_camera);
 	m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
 	m_viewport->setCamera(m_camera);
 	
@@ -87,13 +93,13 @@ void Application::init (int argc, char **argv) {
 void Application::run () {
 	INFO("Rendering");
 	running = true;
-	m_root->startRendering();
+	ref<Ogre::Root>().startRendering();
 }
 
 void Application::shutdown () {
-	m_input->unregisterKeyListener(this);
-	m_root->shutdown();
-	delete m_config;
+	ref<InputManager>().unregisterKeyListener(this);
+	ref<Ogre::Root>().shutdown();
+	delete ptr<ConfigManager>();
 	
 	LOG(Logging::LL_TELETYPE, "GET ME THOSE CHINESE LANGUAGE FILES I ASKED FOR");
 	LOG(Logging::LL_TELETYPE, "END OF LINE");
@@ -101,30 +107,26 @@ void Application::shutdown () {
 
 // Early start on cpu-based updates
 // Input here will be up to 1 extra frame older than frameStarted
-bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt)
-{
-//	INFO("Application::frameRenderingQueued");
-	
+bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt) {
 	return true;
 }
 // Normal frame start
-bool Application::frameStarted (const Ogre::FrameEvent& evt)
-{
-//	INFO("Application::frameStarted");
+bool Application::frameStarted (const Ogre::FrameEvent& evt) {
+	REF(DisplayManager, display);
 	
 	double time = (double)timer.getMicroseconds()/1e6;
 	
 	// See if we should stop
-	if (m_display->isClosing()) { INFO("Display is closing"); running = false; }
+	if (display.isClosing()) { INFO("Display is closing"); running = false; }
 	if (!running) return false;
 
 	
-	m_display->lock_shared();
+	display.lock_shared();
 	
 //	INFO("got lock, starting to render");
 	
 	
-	float aspect = (float)(m_display->getRenderWindow()->getWidth()) / m_display->getRenderWindow()->getHeight();
+	float aspect = (float)(display.getRenderWindow()->getWidth()) / display.getRenderWindow()->getHeight();
 	
 	// Rotate the camera
 	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*70, cos((float)time*3.14159f)*10, cos((float)time)*70) );
@@ -135,24 +137,25 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt)
 	m_camera->setAspectRatio(aspect);
 	m_camera->setFOVy(Ogre::Radian(sin(time/4)/2+1));
 	
-	m_display->unlock_shared();
+	display.unlock_shared();
 	
 	return true;
 }
 
 bool Application::keyPressed (const OIS::KeyEvent& evt) {
+	REF(InputManager, input);
 	switch (evt.key) {
 		case OIS::KC_ESCAPE: running = false; break;
 		case OIS::KC_BACKSLASH:
 			// Toggle fullscreen/window
-			if (m_display->getRenderWindow()->isFullScreen()) m_config->set("video:display/mode", "window");
-			else m_config->set("video:display/mode", "fullscreen");
-			m_display->applySettings();
+			if (ref<DisplayManager>().getRenderWindow()->isFullScreen()) ref<ConfigManager>().set("video:display/mode", "window");
+			else ref<ConfigManager>().set("video:display/mode", "fullscreen");
+			ref<DisplayManager>().applySettings();
 			break;
 		case OIS::KC_F1:
 			// Toggle mouse mode
-			if (m_input->getMouseFreedom()) m_input->setMouseFreedom(false);
-			else m_input->setMouseFreedom(true);
+			if (input.getMouseFreedom()) input.setMouseFreedom(false);
+			else input.setMouseFreedom(true);
 			break;
 	} return true;
 }

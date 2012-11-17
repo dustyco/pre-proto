@@ -3,15 +3,18 @@
 #include <boost/lexical_cast.hpp>
 
 #include "../logging/logging.h"
+#include "../util/singleton.h"
+#include "../video/DisplayManager.h"
+
 #include "GUIManager.h"
 
 
-GUIManager::GUIManager (DisplayManager* display)
+GUIManager::GUIManager ()
 {
-display->lock();
+ref<DisplayManager>().lock();
 
 	// Set up CEGUI
-	m_cegui_renderer = &CEGUI::OgreRenderer::bootstrapSystem(*(display->getRenderWindow()));
+	m_cegui_renderer = &CEGUI::OgreRenderer::bootstrapSystem(*(ref<DisplayManager>().getRenderWindow()));
 	
 	CEGUI::Imageset::setDefaultResourceGroup("Imagesets");
 	CEGUI::Font::setDefaultResourceGroup("Fonts");
@@ -38,7 +41,7 @@ display->lock();
 	// set size to be half the size of the parent
 	m_cegui_framewindow->setSize( CEGUI::UVector2( CEGUI::UDim( 0.5f, 0 ), CEGUI::UDim( 0.5f, 0 ) ) );
 	
-display->unlock();
+ref<DisplayManager>().unlock();
 }
 GUIManager::~GUIManager ()
 {

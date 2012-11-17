@@ -15,7 +15,7 @@
 // Outside systems are to use the applySettings function
 class DisplayManager : public boost::shared_mutex, public Ogre::WindowEventListener {
 public:
-	DisplayManager (ConfigManager* config, Ogre::Root* root);
+	DisplayManager ();
 	~DisplayManager ();
 	
 	// Uses settings from the ConfigManager
@@ -61,8 +61,6 @@ private:
 	// Scans the rendersystem's possible resolutions for the largest
 	void _getBestRes (int& width, int& height);
 	
-	ConfigManager*               m_config;
-	Ogre::Root*                  m_root;
 	Ogre::RenderWindow*          m_renderWindow;
 	Ogre::RenderWindow*          m_dummyWindow;
 	bool                         m_window_is_new, m_closing;

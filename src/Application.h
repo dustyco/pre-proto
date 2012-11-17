@@ -2,12 +2,9 @@
 
 
 #include <OGRE/Ogre.h>
+#include <OIS/OIS.h>
 
 #include "logging/logging.h"
-#include "config/config.h"
-#include "video/video.h"
-#include "input/input.h"
-#include "gui/gui.h"
 
 #ifndef OGRE_PLUGIN_DIR
 #define OGRE_PLUGIN_DIR "."
@@ -33,12 +30,7 @@ public:
 
 private:
 	Logging::LogManager* m_log;
-	ConfigManager*       m_config;
-	DisplayManager*      m_display;
-	InputManager*        m_input;
-	GUIManager*          m_gui;
 
-	Ogre::Root*         m_root;
 	Ogre::SceneManager* m_sceneMgr;
 	Ogre::Camera*       m_camera;
 	Ogre::SceneNode*    m_camNode;
