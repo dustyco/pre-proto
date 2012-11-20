@@ -5,7 +5,7 @@ add_subdirectory(util)
 #add_subdirectory(profiler)
 add_subdirectory(logging)
 add_subdirectory(input)
-#add_subdirectory(game)
+add_subdirectory(game)
 add_subdirectory(video)
 add_subdirectory(gui)
 

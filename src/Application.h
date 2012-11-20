@@ -5,6 +5,7 @@
 #include <OIS/OIS.h>
 
 #include "logging/logging.h"
+#include "game/Game.h"
 
 #ifndef OGRE_PLUGIN_DIR
 #define OGRE_PLUGIN_DIR "."
@@ -26,15 +27,24 @@ public:
 	
 	// OIS::KeyListener
 	bool keyPressed  (const OIS::KeyEvent& evt);
-	bool keyReleased  (const OIS::KeyEvent& evt);
+	bool keyReleased (const OIS::KeyEvent& evt);
+	
+	Ogre::RenderTarget* makePanel (float x, float y);
 
 private:
+	class Panel {
+	public:
+		Panel ();
+	};
+	
 	Logging::LogManager* m_log;
-
-	Ogre::SceneManager* m_sceneMgr;
-	Ogre::Camera*       m_camera;
-	Ogre::SceneNode*    m_camNode;
-	Ogre::Viewport*     m_viewport;
+	
+	Game* m_game_normal;
+	Game* m_game_test;
+	
+	Ogre::SceneManager* m_app_sceneMgr;
+	Ogre::Camera*       m_app_camera;
+	Ogre::Viewport*     m_app_viewport;
 	
 	Ogre::Timer timer;
 	bool running;

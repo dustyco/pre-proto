@@ -23,7 +23,7 @@ int main (int argc, char** argv)
 		app.shutdown();
 		return 0;
 	} catch (Ogre::Exception& e) {
-		cerr << "Uncaught Ogre Exception: " << e.getFullDescription().c_str() << endl;
+//		cerr << "Uncaught Ogre Exception: " << e.getFullDescription().c_str() << endl;
 		#ifdef WIN32
 			MessageBox(NULL, e.getFullDescription().c_str(), "Uncaught Ogre Exception!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 		#endif

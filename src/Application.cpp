@@ -3,6 +3,7 @@
 #include <sstream>
 #include <math.h>
 
+#include "logging/logging.h"
 #include "util/singleton.h"
 #include "config/config.h"
 #include "video/video.h"
@@ -63,30 +64,64 @@ void Application::init (int argc, char **argv) {
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/materials/textures", "FileSystem", "General");
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/models",             "FileSystem", "General");
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
-	// Set up scene and camera
-	m_sceneMgr = ogre_root.createSceneManager(Ogre::ST_GENERIC, "SceneMgr");
-	m_camera = m_sceneMgr->createCamera("Camera");
-	m_camNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode();
-	m_camNode->attachObject(m_camera);
-	m_camNode->setPosition(Ogre::Vector3(10,10,50));
-	m_camNode->setPosition(Ogre::Vector3(0,0,1));
-	m_camera->lookAt(Ogre::Vector3(0,0,0));
-	m_camera->setNearClipDistance(1);
 	
-	// This will have to be reinitialized if the window is recreated for FSAA changes (it's not right now)
-	m_viewport = ref<DisplayManager>().getRenderWindow()->addViewport(m_camera);
-	m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
-	m_viewport->setCamera(m_camera);
+	// Scene //////////////////////////////////////////////////////////////////
+	m_app_sceneMgr = ogre_root.createSceneManager(Ogre::ST_GENERIC, "app_SceneManager");
+	m_app_camera = m_app_sceneMgr->createCamera("app_Camera");
+	m_app_viewport = ref<DisplayManager>().getRenderWindow()->addViewport(m_app_camera);
+	m_app_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
+	m_app_viewport->setCamera(m_app_camera);
 	
-	// PLACEHOLDER SCENE //////////////////////////////////////////////////////
-	Ogre::Entity* ogreHead = m_sceneMgr->createEntity("Head", "ogrehead.mesh");
-	Ogre::SceneNode* headNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode("HeadNode");
-	headNode->attachObject(ogreHead);
-	m_sceneMgr->setAmbientLight(Ogre::ColourValue(0.1f, 0.1f, 0.1f));
-	Ogre::Light* light = m_sceneMgr->createLight("MainLight");
-	light->setPosition(20.0f, 80.0f, 50.0f);
-
+	{
+		// RTT Normal /////////////////////////////////////////////////////////////
+		Ogre::TexturePtr rtt_texture = Ogre::TextureManager::getSingleton().createManual(
+			"app_game_normal_rtt",
+			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			Ogre::TEX_TYPE_2D,
+			ref<DisplayManager>().getRenderWindow()->getWidth(),
+			ref<DisplayManager>().getRenderWindow()->getHeight(),
+			0,
+			Ogre::PF_R8G8B8,
+			Ogre::TU_RENDERTARGET
+		);
+		Ogre::MaterialPtr renderMaterial = Ogre::MaterialManager::getSingleton().create("app_game_normal_mat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_normal_rtt");
+		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
+		mMiniScreen->setCorners(0.0f, 1.0f, 2.0f, -1.0f);
+		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
+		mMiniScreen->setMaterial("app_game_normal_mat");
+		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_normal_node");
+		app_game_normal_node->attachObject(mMiniScreen);
+	
+		m_game_normal = new Game(rtt_texture->getBuffer()->getRenderTarget());
+	}
+	{
+		// RTT Normal /////////////////////////////////////////////////////////////
+		Ogre::TexturePtr rtt_texture = Ogre::TextureManager::getSingleton().createManual(
+			"app_game_test_rtt",
+			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+			Ogre::TEX_TYPE_2D,
+			ref<DisplayManager>().getRenderWindow()->getWidth(),
+			ref<DisplayManager>().getRenderWindow()->getHeight(),
+			0,
+			Ogre::PF_R8G8B8,
+			Ogre::TU_RENDERTARGET
+		);
+		Ogre::MaterialPtr renderMaterial = Ogre::MaterialManager::getSingleton().create("app_game_test_mat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_test_rtt");
+		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
+		mMiniScreen->setCorners(-2.0f, 1.0f, 0.0f, -1.0f);
+		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
+		mMiniScreen->setMaterial("app_game_test_mat");
+		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_test_node");
+		app_game_normal_node->attachObject(mMiniScreen);
+	
+		m_game_test = new Game(rtt_texture->getBuffer()->getRenderTarget());
+	}
+	
+	
 	INFO("Proto initialized");
 }
 
@@ -128,14 +163,8 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	
 	float aspect = (float)(display.getRenderWindow()->getWidth()) / display.getRenderWindow()->getHeight();
 	
-	// Rotate the camera
-	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*70, cos((float)time*3.14159f)*10, cos((float)time)*70) );
-	m_camNode->setPosition( Ogre::Vector3(0, 0,50) );
-	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*50, sin((float)time*3.14159f)*5, cos((float)time)*50) );
-//	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, 0,50) );
-	m_camera->lookAt(Ogre::Vector3(0,0,0));
-	m_camera->setAspectRatio(aspect);
-	m_camera->setFOVy(Ogre::Radian(sin(time/4)/2+1));
+	m_game_normal->update();
+	m_game_test->update();
 	
 	display.unlock_shared();
 	
