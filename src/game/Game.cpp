@@ -1,15 +1,15 @@
 
 
 #include "../util/singleton.h"
+#include "../video/DisplayManager.h"
 
 #include "Game.h"
 
 using namespace boost;
 
 
-Game::Game (Ogre::RenderTarget* rt) {
+Game::Game () {
 //	m_physics = new thread(physics);
-	m_rt = rt;
 	REF(Ogre::Root, ogre_root);
 
 /*	// Spinning ogre head /////////////////////////////////////////////////////
@@ -64,11 +64,6 @@ Game::Game (Ogre::RenderTarget* rt) {
 	m_camera->lookAt(Ogre::Vector3(0,0,0));
 	m_camera->setNearClipDistance(1);
 	
-	// This will have to be reinitialized if the window is recreated for FSAA changes (it's not right now)
-	m_viewport = rt->addViewport(m_camera);
-	m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
-	m_viewport->setCamera(m_camera);
-	
 	// PLACEHOLDER SCENE //////////////////////////////////////////////////////
 	Ogre::Entity* ogreHead = m_sceneMgr->createEntity("Head", "ogrehead.mesh");
 	Ogre::SceneNode* headNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode("HeadNode");
@@ -77,21 +72,19 @@ Game::Game (Ogre::RenderTarget* rt) {
 	Ogre::Light* light = m_sceneMgr->createLight("MainLight");
 	light->setPosition(20.0f, 80.0f, 50.0f);
 	
-	
-	
-	
 }
 Game::~Game () {
 	m_running = false;
 //	physics.join();
 }
 
-void Game::setRenderTarget (Ogre::RenderTarget* rt) {
-	
+Ogre::Camera* Game::getCamera () {
+	return m_camera;
 }
+
 void Game::update () {
-	double time = double(timer.getMicroseconds())/1e6;
-	float aspect = float(m_rt->getWidth()) / m_rt->getHeight();
+	double time = double(timer.getMicroseconds())/1e6;// time = 0;
+	float aspect = float(ref<DisplayManager>().getRenderWindow()->getWidth()) / ref<DisplayManager>().getRenderWindow()->getHeight();
 	
 	// Rotate the camera
 	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*70, cos((float)time*3.14159f)*10, cos((float)time)*70) );

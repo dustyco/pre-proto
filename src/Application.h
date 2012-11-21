@@ -42,9 +42,8 @@ private:
 	Game* m_game_normal;
 	Game* m_game_test;
 	
-	Ogre::SceneManager* m_app_sceneMgr;
-	Ogre::Camera*       m_app_camera;
-	Ogre::Viewport*     m_app_viewport;
+	Ogre::Viewport*     m_game_normal_viewport;
+	Ogre::Viewport*     m_game_test_viewport;
 	
 	Ogre::Timer timer;
 	bool running;

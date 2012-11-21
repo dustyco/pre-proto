@@ -65,62 +65,14 @@ void Application::init (int argc, char **argv) {
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/models",             "FileSystem", "General");
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 	
-	// Scene //////////////////////////////////////////////////////////////////
-	m_app_sceneMgr = ogre_root.createSceneManager(Ogre::ST_GENERIC, "app_SceneManager");
-	m_app_camera = m_app_sceneMgr->createCamera("app_Camera");
-	m_app_viewport = ref<DisplayManager>().getRenderWindow()->addViewport(m_app_camera);
-	m_app_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
-	m_app_viewport->setCamera(m_app_camera);
+	// Two Viewports //////////////////////////////////////////////////////////
+	m_game_normal = new Game;
+	m_game_normal_viewport = ref<DisplayManager>().getRenderWindow()->addViewport(m_game_normal->getCamera(), 0, -0.5f);
+	m_game_normal_viewport->setBackgroundColour(Ogre::ColourValue(0.2f, 0.0f, 0.0f, 1.0f));
 	
-	{
-		// RTT Normal /////////////////////////////////////////////////////////////
-		Ogre::TexturePtr rtt_texture = Ogre::TextureManager::getSingleton().createManual(
-			"app_game_normal_rtt",
-			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			Ogre::TEX_TYPE_2D,
-			ref<DisplayManager>().getRenderWindow()->getWidth(),
-			ref<DisplayManager>().getRenderWindow()->getHeight(),
-			0,
-			Ogre::PF_R8G8B8,
-			Ogre::TU_RENDERTARGET
-		);
-		Ogre::MaterialPtr renderMaterial = Ogre::MaterialManager::getSingleton().create("app_game_normal_mat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_normal_rtt");
-		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
-		mMiniScreen->setCorners(0.0f, 1.0f, 2.0f, -1.0f);
-		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
-		mMiniScreen->setMaterial("app_game_normal_mat");
-		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_normal_node");
-		app_game_normal_node->attachObject(mMiniScreen);
-	
-		m_game_normal = new Game(rtt_texture->getBuffer()->getRenderTarget());
-	}
-	{
-		// RTT Normal /////////////////////////////////////////////////////////////
-		Ogre::TexturePtr rtt_texture = Ogre::TextureManager::getSingleton().createManual(
-			"app_game_test_rtt",
-			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			Ogre::TEX_TYPE_2D,
-			ref<DisplayManager>().getRenderWindow()->getWidth(),
-			ref<DisplayManager>().getRenderWindow()->getHeight(),
-			0,
-			Ogre::PF_R8G8B8,
-			Ogre::TU_RENDERTARGET
-		);
-		Ogre::MaterialPtr renderMaterial = Ogre::MaterialManager::getSingleton().create("app_game_test_mat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_test_rtt");
-		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
-		mMiniScreen->setCorners(-2.0f, 1.0f, 0.0f, -1.0f);
-		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
-		mMiniScreen->setMaterial("app_game_test_mat");
-		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_test_node");
-		app_game_normal_node->attachObject(mMiniScreen);
-	
-		m_game_test = new Game(rtt_texture->getBuffer()->getRenderTarget());
-	}
-	
+	m_game_test = new Game;
+	m_game_test_viewport = ref<DisplayManager>().getRenderWindow()->addViewport(m_game_test->getCamera(), 1, 0.5f);
+	m_game_test_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.2f, 0.0f, 1.0f));
 	
 	INFO("Proto initialized");
 }
@@ -162,6 +114,10 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	
 	
 	float aspect = (float)(display.getRenderWindow()->getWidth()) / display.getRenderWindow()->getHeight();
+	float pos = cos(time)*0.5f;
+	
+	m_game_normal_viewport->setDimensions(pos-0.5, 0, 1, 1);
+	m_game_test_viewport->setDimensions(pos+0.5, 0, 1, 1);
 	
 	m_game_normal->update();
 	m_game_test->update();
@@ -170,7 +126,6 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	
 	return true;
 }
-
 bool Application::keyPressed (const OIS::KeyEvent& evt) {
 	REF(InputManager, input);
 	switch (evt.key) {
@@ -185,6 +140,10 @@ bool Application::keyPressed (const OIS::KeyEvent& evt) {
 			// Toggle mouse mode
 			if (input.getMouseFreedom()) input.setMouseFreedom(false);
 			else input.setMouseFreedom(true);
+			break;
+		case OIS::KC_F9:
+			// Take a screenshot
+			ref<DisplayManager>().getRenderWindow()->writeContentsToTimestampedFile("screenshot-", ".png");
 			break;
 	} return true;
 }
