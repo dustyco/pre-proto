@@ -88,7 +88,7 @@ void Application::init (int argc, char **argv) {
 		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
 		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_normal_rtt");
 		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
-		mMiniScreen->setCorners(0.0f, 1.0f, 2.0f, -1.0f);
+		mMiniScreen->setCorners(-2.0f, 1.0f, 0.0f, -1.0f);
 		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
 		mMiniScreen->setMaterial("app_game_normal_mat");
 		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_normal_node");
@@ -112,7 +112,7 @@ void Application::init (int argc, char **argv) {
 		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
 		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_test_rtt");
 		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
-		mMiniScreen->setCorners(-2.0f, 1.0f, 0.0f, -1.0f);
+		mMiniScreen->setCorners(0.0f, 1.0f, 2.0f, -1.0f);
 		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
 		mMiniScreen->setMaterial("app_game_test_mat");
 		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_test_node");
@@ -121,6 +121,8 @@ void Application::init (int argc, char **argv) {
 		m_game_test = new Game(rtt_texture->getBuffer()->getRenderTarget());
 	}
 	
+	// Keep time since the start of this session
+	m_clock.setEpoch();
 	
 	INFO("Proto initialized");
 }
@@ -149,7 +151,8 @@ bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt) {
 bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	REF(DisplayManager, display);
 	
-	double time = (double)timer.getMicroseconds()/1e6;
+	// Real time
+	double time = 1e-6*m_clock.getDurationSinceEpoch().total_microseconds();
 	
 	// See if we should stop
 	if (display.isClosing()) { INFO("Display is closing"); running = false; }
@@ -158,14 +161,30 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	
 	display.lock_shared();
 	
-//	INFO("got lock, starting to render");
-	
-	
 	float aspect = (float)(display.getRenderWindow()->getWidth()) / display.getRenderWindow()->getHeight();
 	
+	// Alternate rendering between the two
+/*	if (int(time)%2 == 0) {
+		m_game_normal->unpause();
+		m_game_test->pause();
+	} else {
+		m_game_normal->pause();
+		m_game_test->unpause();
+	}
+*/	
+	// Play with game speed
+//	m_game_test->m_clock.warp(pow(1.2, time_r));
+	m_game_test->m_clock.warp(sin(time)*sin(time));
+//	m_game_test->m_clock.unwarp();
+
 	m_game_normal->update();
 	m_game_test->update();
-	
+
+/*	std::cerr << "texture memory: "
+	          << float(Ogre::TextureManager::getSingleton().getMemoryUsage())/1e6
+	          << " MB"
+	          << std::endl;
+*/	
 	display.unlock_shared();
 	
 	return true;

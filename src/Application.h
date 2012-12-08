@@ -5,6 +5,7 @@
 #include <OIS/OIS.h>
 
 #include "logging/logging.h"
+#include "util/Clock.h"
 #include "game/Game.h"
 
 #ifndef OGRE_PLUGIN_DIR
@@ -39,6 +40,7 @@ private:
 	
 	Logging::LogManager* m_log;
 	
+	Clock m_clock;
 	Game* m_game_normal;
 	Game* m_game_test;
 	
