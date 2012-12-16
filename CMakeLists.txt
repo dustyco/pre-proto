@@ -120,13 +120,24 @@ if(NOT OIS_FOUND)
 endif()
 include_directories(${OIS_INCLUDE_DIRS})
 
+# Find MyGUI ##################################################################
+#set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR};${CMAKE_MODULE_PATH}")
+#find_package(MyGUI REQUIRED COMPONENTS OGRE)
+#if(NOT MYGUI_FOUND)
+#	message(SEND_ERROR "Failed to find MyGUI.")
+#endif()
+#include_directories(${MYGUI_INCLUDE_DIRS})
+#message(MYGUI_INCLUDE_DIRS = ${MYGUI_INCLUDE_DIRS})
+#message(MYGUI_LIBRARIES = ${MYGUI_LIBRARIES})
+#message(MYGUI_PLATFORM_LIBRARIES = ${MYGUI_PLATFORM_LIBRARIES})
+
 # Find CEGUI ##################################################################
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR};${CMAKE_MODULE_PATH}")
-find_package(CEGUI REQUIRED COMPONENTS OGRE)
-if(NOT CEGUI_FOUND)
-	message(SEND_ERROR "Failed to find CEGUI.")
-endif()
-include_directories(${CEGUI_INCLUDE_DIR})
+#set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR};${CMAKE_MODULE_PATH}")
+#find_package(CEGUI REQUIRED COMPONENTS OGRE)
+#if(NOT CEGUI_FOUND)
+#	message(SEND_ERROR "Failed to find CEGUI.")
+#endif()
+#include_directories(${CEGUI_INCLUDE_DIR})
 
 # Find Bullet #################################################################
 # Doesn't work on windows yet

@@ -48,6 +48,5 @@ private:
 	Ogre::Camera*       m_app_camera;
 	Ogre::Viewport*     m_app_viewport;
 	
-	Ogre::Timer timer;
 	bool running;
 };

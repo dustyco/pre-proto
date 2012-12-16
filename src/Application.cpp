@@ -8,7 +8,6 @@
 #include "config/config.h"
 #include "video/video.h"
 #include "input/input.h"
-#include "gui/gui.h"
 
 #include "Application.h"
 
@@ -50,13 +49,6 @@ void Application::init (int argc, char **argv) {
 
 	// Initialize input and add a listener
 	set<InputManager>().registerKeyListener(this);
-	
-	// Create CEGUI resource groups and initialize the gui
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/schemes",      "FileSystem", "Schemes");
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/imagesets",    "FileSystem", "Imagesets");
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/fonts",        "FileSystem", "Fonts");
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media/cegui/looknfeel",    "FileSystem", "LookNFeel");
-	set<GUIManager>();
 	
 	// Set resource search paths
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media",                    "FileSystem", "General");
@@ -158,20 +150,10 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	if (display.isClosing()) { INFO("Display is closing"); running = false; }
 	if (!running) return false;
 
-	
 	display.lock_shared();
 	
 	float aspect = (float)(display.getRenderWindow()->getWidth()) / display.getRenderWindow()->getHeight();
 	
-	// Alternate rendering between the two
-/*	if (int(time)%2 == 0) {
-		m_game_normal->unpause();
-		m_game_test->pause();
-	} else {
-		m_game_normal->pause();
-		m_game_test->unpause();
-	}
-*/	
 	// Play with game speed
 //	m_game_test->m_clock.warp(pow(1.2, time_r));
 	m_game_test->m_clock.warp(sin(time)*sin(time));
@@ -180,11 +162,6 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	m_game_normal->update();
 	m_game_test->update();
 
-/*	std::cerr << "texture memory: "
-	          << float(Ogre::TextureManager::getSingleton().getMemoryUsage())/1e6
-	          << " MB"
-	          << std::endl;
-*/	
 	display.unlock_shared();
 	
 	return true;
