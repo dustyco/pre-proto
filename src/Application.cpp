@@ -3,8 +3,6 @@
 #include <sstream>
 #include <math.h>
 
-#include "logging/logging.h"
-#include "util/singleton.h"
 #include "config/config.h"
 #include "video/video.h"
 #include "input/input.h"
@@ -13,8 +11,7 @@
 
 
 void Application::init (int argc, char **argv) {
-	m_log = Logging::LogManager::getInstance();
-	m_log->addLogger(new Logging::ConsoleLogger(), Logging::LL_DEBUG);
+	Logging::LogManager::getInstance()->addLogger(new Logging::ConsoleLogger(), Logging::LL_DEBUG);
 
 	// In order to avoid Ogre's default logging behavior we have to create
 	// the Ogre::LogManager before initializing the Root object.
@@ -46,6 +43,8 @@ void Application::init (int argc, char **argv) {
 	
 	// Initialize the display manager
 	set<DisplayManager>();
+	m_width  = -1;
+	m_height = -1;
 
 	// Initialize input and add a listener
 	set<InputManager>().registerKeyListener(this);
@@ -64,54 +63,12 @@ void Application::init (int argc, char **argv) {
 	m_app_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
 	m_app_viewport->setCamera(m_app_camera);
 	
-	{
-		// RTT Normal /////////////////////////////////////////////////////////////
-		Ogre::TexturePtr rtt_texture = Ogre::TextureManager::getSingleton().createManual(
-			"app_game_normal_rtt",
-			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			Ogre::TEX_TYPE_2D,
-			ref<DisplayManager>().getRenderWindow()->getWidth(),
-			ref<DisplayManager>().getRenderWindow()->getHeight(),
-			0,
-			Ogre::PF_R8G8B8,
-			Ogre::TU_RENDERTARGET
-		);
-		Ogre::MaterialPtr renderMaterial = Ogre::MaterialManager::getSingleton().create("app_game_normal_mat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_normal_rtt");
-		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
-		mMiniScreen->setCorners(-2.0f, 1.0f, 0.0f, -1.0f);
-		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
-		mMiniScreen->setMaterial("app_game_normal_mat");
-		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_normal_node");
-		app_game_normal_node->attachObject(mMiniScreen);
+	m_game_a = new Game;
+	m_game_b = new Game;
 	
-		m_game_normal = new Game(rtt_texture->getBuffer()->getRenderTarget());
-	}
-	{
-		// RTT Normal /////////////////////////////////////////////////////////////
-		Ogre::TexturePtr rtt_texture = Ogre::TextureManager::getSingleton().createManual(
-			"app_game_test_rtt",
-			Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-			Ogre::TEX_TYPE_2D,
-			ref<DisplayManager>().getRenderWindow()->getWidth(),
-			ref<DisplayManager>().getRenderWindow()->getHeight(),
-			0,
-			Ogre::PF_R8G8B8,
-			Ogre::TU_RENDERTARGET
-		);
-		Ogre::MaterialPtr renderMaterial = Ogre::MaterialManager::getSingleton().create("app_game_test_mat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-		renderMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-		renderMaterial->getTechnique(0)->getPass(0)->createTextureUnitState("app_game_test_rtt");
-		Ogre::Rectangle2D *mMiniScreen = new Ogre::Rectangle2D(true);
-		mMiniScreen->setCorners(0.0f, 1.0f, 2.0f, -1.0f);
-		mMiniScreen->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
-		mMiniScreen->setMaterial("app_game_test_mat");
-		Ogre::SceneNode* app_game_normal_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_test_node");
-		app_game_normal_node->attachObject(mMiniScreen);
-	
-		m_game_test = new Game(rtt_texture->getBuffer()->getRenderTarget());
-	}
+	// Set up the RTTs each game will render into
+	// They are recreated when the display resizes: checkDisplaySize()
+	createGamePanels();
 	
 	// Keep time since the start of this session
 	m_clock.setEpoch();
@@ -152,15 +109,18 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 
 	display.lock_shared();
 	
+	// See if we need to resize game panel RTT's
+	checkDisplaySize();
+	
 	float aspect = (float)(display.getRenderWindow()->getWidth()) / display.getRenderWindow()->getHeight();
 	
 	// Play with game speed
-//	m_game_test->m_clock.warp(pow(1.2, time_r));
-	m_game_test->m_clock.warp(sin(time)*sin(time));
-//	m_game_test->m_clock.unwarp();
+//	m_game_b->m_clock.warp(pow(1.2, time_r));
+	m_game_b->m_clock.warp(sin(time)*sin(time));
+//	m_game_b->m_clock.unwarp();
 
-	m_game_normal->update();
-	m_game_test->update();
+	m_game_a->update();
+	m_game_b->update();
 
 	display.unlock_shared();
 	
@@ -185,5 +145,104 @@ bool Application::keyPressed (const OIS::KeyEvent& evt) {
 	} return true;
 }
 bool Application::keyReleased(const OIS::KeyEvent& evt) { return true; }
+
+void Application::checkDisplaySize () {
+	Ogre::RenderWindow& window = *(ref<DisplayManager>().getRenderWindow());
+	if (m_width != window.getWidth() || m_height != window.getHeight()) {
+		// It changed
+		m_width  = window.getWidth();
+		m_height = window.getHeight();
+//		INFO("Resolution changed");
+		// Recreate game RTT's
+		deleteGamePanels();
+		createGamePanels();
+	}
+}
+
+void Application::deleteGamePanels () {
+	using namespace Ogre;
+	
+	delete m_game_a_rect;
+	delete m_game_b_rect;
+	
+	TextureManager::getSingleton().remove(m_game_a_rtt->getName());
+	TextureManager::getSingleton().remove(m_game_b_rtt->getName());
+	
+	MaterialManager::getSingleton().remove(m_game_a_mat->getName());
+	MaterialManager::getSingleton().remove(m_game_b_mat->getName());
+	
+	m_game_a_node->getParentSceneNode()->removeAndDestroyChild(m_game_a_node->getName());
+	m_game_b_node->getParentSceneNode()->removeAndDestroyChild(m_game_b_node->getName());
+	
+	m_game_a_rtt.setNull();
+	m_game_b_rtt.setNull();
+	
+	m_game_a_mat.setNull();
+	m_game_b_mat.setNull();
+}
+void Application::createGamePanels () {
+	using namespace Ogre;
+	
+	// Textures
+	m_game_a_rtt = Ogre::TextureManager::getSingleton().createManual(
+		"app_game_a_rtt",
+		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		Ogre::TEX_TYPE_2D,
+		ref<DisplayManager>().getRenderWindow()->getWidth(),
+		ref<DisplayManager>().getRenderWindow()->getHeight(),
+		0,
+		Ogre::PF_R8G8B8,
+		Ogre::TU_RENDERTARGET
+	);
+	m_game_b_rtt = Ogre::TextureManager::getSingleton().createManual(
+		"app_game_b_rtt",
+		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		Ogre::TEX_TYPE_2D,
+		ref<DisplayManager>().getRenderWindow()->getWidth(),
+		ref<DisplayManager>().getRenderWindow()->getHeight(),
+		0,
+		Ogre::PF_R8G8B8,
+		Ogre::TU_RENDERTARGET
+	);
+	
+	// Materials
+	m_game_a_mat = MaterialManager::getSingleton().create("app_game_a_mat", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	m_game_b_mat = MaterialManager::getSingleton().create("app_game_b_mat", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	{
+		Pass* pass = m_game_a_mat->getTechnique(0)->getPass(0);
+		pass->setLightingEnabled(false);
+		TextureUnitState* tus = pass->createTextureUnitState();
+		tus->setTextureName(m_game_a_rtt->getName());
+		tus->setNumMipmaps(0);
+	} {
+		Pass* pass = m_game_b_mat->getTechnique(0)->getPass(0);
+		pass->setLightingEnabled(false);
+		TextureUnitState* tus = pass->createTextureUnitState();
+		tus->setTextureName(m_game_b_rtt->getName());
+		tus->setNumMipmaps(0);
+	}
+	
+	// Rectangles
+	m_game_a_rect = new Ogre::Rectangle2D(true);
+	m_game_b_rect = new Ogre::Rectangle2D(true);
+	m_game_a_rect->setCorners(-2.0f, 1.0f, 0.0f, -1.0f);
+	m_game_b_rect->setCorners( 0.0f, 1.0f, 2.0f, -1.0f);
+//	m_game_a_rect->setCorners(-1.0f, 1.0f, 1.0f, -1.0f);
+//	m_game_b_rect->setCorners(-1.0f, 1.0f, 0.0f, -1.0f);
+	m_game_a_rect->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
+	m_game_b_rect->setBoundingBox(Ogre::AxisAlignedBox(-100000.0f * Ogre::Vector3::UNIT_SCALE, 100000.0f * Ogre::Vector3::UNIT_SCALE));
+	m_game_a_rect->setMaterial(m_game_a_mat->getName());
+	m_game_b_rect->setMaterial(m_game_b_mat->getName());
+	m_game_a_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_a_node");
+	m_game_b_node = m_app_sceneMgr->getRootSceneNode()->createChildSceneNode("app_game_b_node");
+	m_game_a_node->attachObject(m_game_a_rect);
+	m_game_b_node->attachObject(m_game_b_rect);
+	
+	// Point the games at them
+	m_game_a->setRenderTarget(m_game_a_rtt->getBuffer()->getRenderTarget());
+	m_game_b->setRenderTarget(m_game_b_rtt->getBuffer()->getRenderTarget());
+}
+
+
 
 

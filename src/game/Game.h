@@ -9,7 +9,7 @@
 
 class Game {
 public:
-	Game (Ogre::RenderTarget* rt);
+	Game ();
 	~Game ();
 	
 	void setRenderTarget (Ogre::RenderTarget* rt);
