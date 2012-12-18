@@ -4,7 +4,8 @@
 #include <OGRE/Ogre.h>
 #include <OIS/OIS.h>
 
-#include "logging/logging.h"
+#include "common.h"
+#include "util/Clock.h"
 #include "game/Game.h"
 
 #ifndef OGRE_PLUGIN_DIR
@@ -28,23 +29,34 @@ public:
 	// OIS::KeyListener
 	bool keyPressed  (const OIS::KeyEvent& evt);
 	bool keyReleased (const OIS::KeyEvent& evt);
-	
-	Ogre::RenderTarget* makePanel (float x, float y);
 
 private:
-	class Panel {
-	public:
-		Panel ();
-	};
+	// Recreate RTT's for the game panels if the display changed size
+	void checkDisplaySize ();
+	int m_width, m_height;
 	
-	Logging::LogManager* m_log;
+	void createGamePanels ();
+	void deleteGamePanels ();
 	
-	Game* m_game_normal;
-	Game* m_game_test;
+	Ogre::SceneNode* m_game_a_node;
+	Ogre::SceneNode* m_game_b_node;
+	
+	Ogre::Rectangle2D* m_game_a_rect;
+	Ogre::Rectangle2D* m_game_b_rect;
+	
+	Ogre::MaterialPtr m_game_a_mat;
+	Ogre::MaterialPtr m_game_b_mat;
+	
+	Ogre::TexturePtr m_game_a_rtt;
+	Ogre::TexturePtr m_game_b_rtt;
+
+private:
+	Clock m_clock;
+	Game* m_game_a;
+	Game* m_game_b;
 	
 	Ogre::Viewport*     m_game_normal_viewport;
 	Ogre::Viewport*     m_game_test_viewport;
 	
-	Ogre::Timer timer;
 	bool running;
 };

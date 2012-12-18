@@ -7,7 +7,6 @@ add_subdirectory(logging)
 add_subdirectory(input)
 add_subdirectory(game)
 add_subdirectory(video)
-add_subdirectory(gui)
 
 # Add source file names to groups
 add_sources(client main.cpp Application.cpp)
