@@ -214,12 +214,14 @@ void Application::createGamePanels () {
 		TextureUnitState* tus = pass->createTextureUnitState();
 		tus->setTextureName(m_game_a_rtt->getName());
 		tus->setNumMipmaps(0);
+		tus->setTextureFiltering(TFO_NONE);
 	} {
 		Pass* pass = m_game_b_mat->getTechnique(0)->getPass(0);
 		pass->setLightingEnabled(false);
 		TextureUnitState* tus = pass->createTextureUnitState();
 		tus->setTextureName(m_game_b_rtt->getName());
 		tus->setNumMipmaps(0);
+		tus->setTextureFiltering(TFO_NONE);
 	}
 	
 	// Rectangles
