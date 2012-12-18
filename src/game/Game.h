@@ -1,10 +1,10 @@
 #pragma once
 
 
-//#include <boost/thread.hpp>
 #include <OGRE/Ogre.h>
 
 #include "../util/Clock.h"
+#include "ComponentRenderable.h"
 
 
 class Game {
@@ -18,16 +18,14 @@ public:
 	void pause ();
 	void unpause ();
 	
-//	void physics ();
 //	void waitLoop ();
 
-//	boost::thread* m_physics;
-	bool           m_running;
-	Clock          m_clock;
+	bool  m_running;
+	Clock m_clock;
 	
-	Ogre::RenderTarget* m_rt;
-	Ogre::SceneManager* m_sceneMgr;
-	Ogre::Camera*       m_camera;
-	Ogre::SceneNode*    m_camNode;
-	Ogre::Viewport*     m_viewport;
+	Ogre::RenderTarget*  m_rt;
+	Ogre::Viewport*      m_viewport;
+
+private:
+	ComponentRenderable* m_renderable;
 };

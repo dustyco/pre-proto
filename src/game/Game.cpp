@@ -3,34 +3,22 @@
 #include <iostream>
 using namespace std;
 
-#include <boost/bind.hpp>
-using namespace boost;
-
 #include "../common.h"
 #include "Game.h"
 
 
 Game::Game () {
-//	m_physics = new thread(physics);
-	REF(Ogre::Root, ogre_root);
+	m_renderable = new ComponentRenderable;
+	m_renderable->add(1, "ogrehead.mesh");
+	m_renderable->add(2, "ogrehead.mesh")->setPosition(Ogre::Vector3(50,0,0));
 	
-	// Set up scene and camera
-	m_sceneMgr = ogre_root.createSceneManager(Ogre::ST_GENERIC);
-	m_camera = m_sceneMgr->createCamera("Camera");
-	m_camNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode();
-	m_camNode->attachObject(m_camera);
-	m_camNode->setPosition(Ogre::Vector3(10,10,50));
-	m_camNode->setPosition(Ogre::Vector3(0,0,1));
-	m_camera->lookAt(Ogre::Vector3(0,0,0));
-	m_camera->setNearClipDistance(1);
-	
-	// PLACEHOLDER SCENE //////////////////////////////////////////////////////
-	Ogre::Entity* ogreHead = m_sceneMgr->createEntity("Head", "ogrehead.mesh");
-	Ogre::SceneNode* headNode = m_sceneMgr->getRootSceneNode()->createChildSceneNode("HeadNode");
-	headNode->attachObject(ogreHead);
-	m_sceneMgr->setAmbientLight(Ogre::ColourValue(0.1f, 0.1f, 0.1f));
-	Ogre::Light* light = m_sceneMgr->createLight("MainLight");
-	light->setPosition(20.0f, 80.0f, 50.0f);
+	// 400 ogres just for fun
+	int id = 1;
+	for (int x=-10; x<10; x++)
+	for (int y=-10; y<10; y++) {
+		m_renderable->add(id, "ogrehead.mesh")->setPosition(Ogre::Vector3(50*x,50*y,0));
+		id++;
+	}
 	
 	// Keep time since the start of this session
 	m_clock.setEpoch();
@@ -40,14 +28,12 @@ Game::Game () {
 }
 Game::~Game () {
 	m_running = false;
-//	physics.join();
 }
 void Game::setRenderTarget (Ogre::RenderTarget* rt) {
-//	INFO("setRenderTarget");
 	m_rt = rt;
-	m_viewport = rt->addViewport(m_camera);
+	m_viewport = rt->addViewport(m_renderable->getCamera());
 	m_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
-	m_viewport->setCamera(m_camera);
+//	m_viewport->setCamera(m_renderable->getCamera());
 }
 
 /*
@@ -73,22 +59,18 @@ void Game::update () {
 	float aspect = float(m_rt->getWidth()) / m_rt->getHeight();
 	
 	// Rotate the camera
-	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*70, cos((float)time*3.14159f)*10, cos((float)time)*70) );
-	m_camNode->setPosition( Ogre::Vector3(0, 0,50) );
-	m_camNode->setPosition( Ogre::Vector3(sin((float)time)*50, sin((float)time*3.14159f)*5, cos((float)time)*50) );
-//	m_camNode->setPosition( Ogre::Vector3(sin(time)*50, 0,50) );
-	m_camera->lookAt(Ogre::Vector3(0,0,0));
-	m_camera->setAspectRatio(aspect);
-	m_camera->setFOVy(Ogre::Radian(sin(time/4)/2+1));
-}
+	Ogre::Camera* cam = m_renderable->getCamera();
+	cam->setAspectRatio(aspect);
+	cam->setFOVy(Ogre::Radian(sin(time/4)/2+1));
+	
+	Ogre::SceneNode* cam_node = m_renderable->getCameraNode();
+//	cam_node->setPosition( Ogre::Vector3(sin((float)time)*70, cos((float)time*3.14159f)*10, cos((float)time)*70) );
+//	cam_node->setPosition( Ogre::Vector3(0, 0,50) );
+	cam_node->setPosition( Ogre::Vector3(sin((float)time)*50, sin((float)time*3.14159f)*5, cos((float)time)*50) );
+//	cam_node->setPosition( Ogre::Vector3(sin(time)*50, 0,50) );
+	cam_node->lookAt(Ogre::Vector3(0,0,0), Ogre::Node::TS_PARENT);
 
-/*
-void Game::physics () {
-	while (m_running) {
-		
-	}
 }
-*/
 
 void Game::pause () {
 	m_rt->setActive(false);

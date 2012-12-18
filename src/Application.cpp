@@ -66,6 +66,9 @@ void Application::init (int argc, char **argv) {
 	m_game_a = new Game;
 	m_game_b = new Game;
 	
+	// Look at a only
+	m_game_shift = 1;
+	
 	// Set up the RTTs each game will render into
 	// They are recreated when the display resizes: checkDisplaySize()
 	createGamePanels();
@@ -119,8 +122,11 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	m_game_b->m_clock.warp(sin(time)*sin(time));
 //	m_game_b->m_clock.unwarp();
 
+	m_game_a_rect->setCorners(m_game_shift-2.0f, 1.0f, m_game_shift+0.0f, -1.0f, false);
+	m_game_b_rect->setCorners(m_game_shift+0.0f, 1.0f, m_game_shift+2.0f, -1.0f, false);
+	
 	m_game_a->update();
-	m_game_b->update();
+//	m_game_b->update();
 
 	display.unlock_shared();
 	

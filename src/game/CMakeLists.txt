@@ -3,7 +3,11 @@
 #add_subdirectory(entities)
 
 # Add source files names to groups
-add_sources(client Game.cpp)
+add_sources(client
+	Game.cpp
+	ComponentRenderable.cpp
+	Renderable.cpp
+)
 
 # Add library names to groups
 #require_libraries(groupname libraryname)

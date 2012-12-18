@@ -49,6 +49,10 @@ private:
 	
 	Ogre::TexturePtr m_game_a_rtt;
 	Ogre::TexturePtr m_game_b_rtt;
+	
+	//  1: a
+	// -1: b
+	float m_game_shift;
 
 private:
 	Clock m_clock;
