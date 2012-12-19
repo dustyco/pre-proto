@@ -14,9 +14,9 @@ Game::Game () {
 	
 	// 400 ogres just for fun
 	int id = 1;
-	for (int x=-10; x<10; x++)
-	for (int y=-10; y<10; y++) {
-		m_renderable->add(id, "ogrehead.mesh")->setPosition(Ogre::Vector3(50*x,50*y,0));
+	for (int x=-4; x<4; x++)
+	for (int y=-4; y<4; y++) {
+		m_renderable->add(id, "ogrehead.mesh")->setPosition(Ogre::Vector3(80*x,80*y,0));
 		id++;
 	}
 	
