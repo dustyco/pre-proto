@@ -1,7 +1,11 @@
 
 
 # Add source files names to groups
-add_sources(client ConsoleLogger.cpp LogManager.cpp OgreLogAdapter.cpp)
+add_sources(shared
+	ConsoleLogger.cpp
+	LogManager.cpp
+)
+add_sources(client OgreLogAdapter.cpp)
 
 # Add library names to groups
 #require_libraries(groupname libraryname)

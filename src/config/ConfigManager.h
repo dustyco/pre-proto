@@ -66,6 +66,8 @@ public:
 	
 private:
 	struct Tree {
+		Tree ();
+		~Tree ();
 		void                   set      (std::string key, ETFDocument::etfnode value);
 		ETFDocument::etfnode   get      (std::string key);
 		void                   remove   (std::string key);

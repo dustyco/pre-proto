@@ -1,10 +1,42 @@
 
 
+#include <sstream>
+#include <math.h>
+
+#include "config/config.h"
+
+#include "Server.h"
+
+
+void Server::init (int argc, char **argv) {
+	Logging::LogManager::getInstance()->addLogger(new Logging::ConsoleLogger(), Logging::LL_DEBUG);
+	
+	// Initialize the configuration system
+	set<ConfigManager>(new ConfigManager(argc, argv));
+	
+	// Keep time since the start of this session
+	m_clock.setEpoch();
+	
+//	INFO("Proto server initialized");
+}
+
+void Server::run () {
+//	INFO("Running");
+	running = true;
+}
+
+void Server::shutdown () {
+//	INFO("Shutting down");
+	delete ptr<ConfigManager>();
+}
+
+
+
+
+
 #include <stdexcept>
 #include <iostream>
 using namespace std;
-
-#include "Application.h"
 
 
 #ifdef WIN32
@@ -17,16 +49,11 @@ int main (int argc, char** argv)
 #endif
 {
 	try {
-		Application app;
+		Server app;
 		app.init(argc, argv);
 		app.run();
 		app.shutdown();
 		return 0;
-	} catch (Ogre::Exception& e) {
-//		cerr << "Uncaught Ogre Exception: " << e.getFullDescription().c_str() << endl;
-		#ifdef WIN32
-			MessageBox(NULL, e.getFullDescription().c_str(), "Uncaught Ogre Exception!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-		#endif
 	} catch (runtime_error& e) {
 		cerr << "Uncaught Runtime Error: " << e.what() << endl;
 		#ifdef WIN32
@@ -42,22 +69,5 @@ int main (int argc, char** argv)
 	return 1;
 }
 
-
-
-/*
-int main (int argc, char** argv)
-{
-
-	try {
-		error = app.init(argc, argv);
-		if (error != 0) return error;
-		error = app.run();
-		app.shutdown();
-		return error;
-	} catch (std::exception e) {
-		std::cerr << "Unhandled exception: %s\n", e.what());
-	}
-}
-*/
 
 

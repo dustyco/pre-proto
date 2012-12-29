@@ -1,7 +1,7 @@
 
 
 # Add source files names to groups
-add_sources(client
+add_sources(shared
 	timer.cpp
 	fsutil.cpp
 	hex.cpp
@@ -9,13 +9,13 @@ add_sources(client
 )
 
 # Add library names to groups
-require_libraries(client
+require_libraries(shared
 	${Boost_DATE_TIME_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
 	${Boost_CHRONO_LIBRARY}
 )
 if(UNIX)
-	require_libraries(client rt)
+	require_libraries(shared rt)
 endif()
 
 # Call last to pass group variables up to the parent

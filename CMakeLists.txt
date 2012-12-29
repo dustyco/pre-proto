@@ -211,18 +211,18 @@ add_subdirectory(src)
 
 
 # Shared static library so we don't have to redundantly compile shared code
-#add_library(shared STATIC ${shared_SRC})
+add_library(shared STATIC ${shared_SRC})
 
 # Game client executable
-set(CLIENT_EXECUTABLE ${CMAKE_PROJECT_NAME})
+set(CLIENT_EXECUTABLE proto)
 add_executable(${CLIENT_EXECUTABLE} ${client_SRC})
-target_link_libraries(${CLIENT_EXECUTABLE} ${client_LIB}) # shared ${shared_LIB})
+target_link_libraries(${CLIENT_EXECUTABLE} ${client_LIB} shared ${shared_LIB})
 set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
 
 # Game server executable
-#set(SERVER_EXECUTABLE ${CMAKE_PROJECT_NAME}_server)
-#add_executable(${SERVER_EXECUTABLE} ${server_SRC})
-#target_link_libraries(${SERVER_EXECUTABLE} ${server_LIB} shared ${shared_LIB})
+set(SERVER_EXECUTABLE proto-server)
+add_executable(${SERVER_EXECUTABLE} ${server_SRC})
+target_link_libraries(${SERVER_EXECUTABLE} ${server_LIB} shared ${shared_LIB})
 
 
 

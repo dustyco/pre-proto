@@ -36,20 +36,6 @@ void Game::setRenderTarget (Ogre::RenderTarget* rt) {
 //	m_viewport->setCamera(m_renderable->getCamera());
 }
 
-/*
-// To test waiting on the clock
-void Game::waitLoop () {
-	boost::posix_time::time_duration duration = boost::posix_time::milliseconds(10);
-	cout << "duration = " << duration << endl;
-	while (m_running) {
-		boost::posix_time::ptime before = m_clock.getTime();
-		m_clock.waitFor(duration);
-		cout << "wait " << frame_count << ": " << m_clock.getTime() - before << endl;
-		frame_count++;
-	}
-}
-*/
-
 void Game::update () {
 //	double time = double(timer.getMicroseconds())/1e6;
 	

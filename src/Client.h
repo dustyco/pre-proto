@@ -13,7 +13,7 @@
 #endif
 
 
-class Application :
+class Client :
 	public Ogre::FrameListener,
 	public OIS::KeyListener
 {

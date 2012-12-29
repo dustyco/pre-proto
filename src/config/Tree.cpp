@@ -11,6 +11,8 @@ namespace fs = boost::filesystem;
 #include "ConfigManager.h"
 
 
+ConfigManager::Tree::Tree () { INFO("Tree"); }
+ConfigManager::Tree::~Tree () { INFO("~Tree"); }
 // Access the appropriate ETFDocument and apply it
 void ConfigManager::Tree::set (std::string key, ETFDocument::etfnode value)
 {

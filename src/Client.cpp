@@ -7,10 +7,10 @@
 #include "video/video.h"
 #include "input/input.h"
 
-#include "Application.h"
+#include "Client.h"
 
 
-void Application::init (int argc, char **argv) {
+void Client::init (int argc, char **argv) {
 	Logging::LogManager::getInstance()->addLogger(new Logging::ConsoleLogger(), Logging::LL_DEBUG);
 
 	// In order to avoid Ogre's default logging behavior we have to create
@@ -79,13 +79,13 @@ void Application::init (int argc, char **argv) {
 	INFO("Proto initialized");
 }
 
-void Application::run () {
+void Client::run () {
 	INFO("Rendering");
 	running = true;
 	ref<Ogre::Root>().startRendering();
 }
 
-void Application::shutdown () {
+void Client::shutdown () {
 	ref<InputManager>().unregisterKeyListener(this);
 	ref<Ogre::Root>().shutdown();
 	delete ptr<ConfigManager>();
@@ -96,11 +96,11 @@ void Application::shutdown () {
 
 // Early start on cpu-based updates
 // Input here will be up to 1 extra frame older than frameStarted
-bool Application::frameRenderingQueued (const Ogre::FrameEvent& evt) {
+bool Client::frameRenderingQueued (const Ogre::FrameEvent& evt) {
 	return true;
 }
 // Normal frame start
-bool Application::frameStarted (const Ogre::FrameEvent& evt) {
+bool Client::frameStarted (const Ogre::FrameEvent& evt) {
 	REF(DisplayManager, display);
 	
 	// Real time
@@ -133,7 +133,7 @@ bool Application::frameStarted (const Ogre::FrameEvent& evt) {
 	return true;
 }
 
-bool Application::keyPressed (const OIS::KeyEvent& evt) {
+bool Client::keyPressed (const OIS::KeyEvent& evt) {
 	REF(InputManager, input);
 	switch (evt.key) {
 		case OIS::KC_ESCAPE: running = false; break;
@@ -150,9 +150,9 @@ bool Application::keyPressed (const OIS::KeyEvent& evt) {
 			break;
 	} return true;
 }
-bool Application::keyReleased(const OIS::KeyEvent& evt) { return true; }
+bool Client::keyReleased(const OIS::KeyEvent& evt) { return true; }
 
-void Application::checkDisplaySize () {
+void Client::checkDisplaySize () {
 	Ogre::RenderWindow& window = *(ref<DisplayManager>().getRenderWindow());
 	if (m_width != window.getWidth() || m_height != window.getHeight()) {
 		// It changed
@@ -165,7 +165,7 @@ void Application::checkDisplaySize () {
 	}
 }
 
-void Application::deleteGamePanels () {
+void Client::deleteGamePanels () {
 	using namespace Ogre;
 	
 	delete m_game_a_rect;
@@ -186,7 +186,7 @@ void Application::deleteGamePanels () {
 	m_game_a_mat.setNull();
 	m_game_b_mat.setNull();
 }
-void Application::createGamePanels () {
+void Client::createGamePanels () {
 	using namespace Ogre;
 	
 	// Textures
@@ -251,6 +251,50 @@ void Application::createGamePanels () {
 	m_game_b->setRenderTarget(m_game_b_rtt->getBuffer()->getRenderTarget());
 }
 
+
+
+
+
+
+#include <stdexcept>
+#include <iostream>
+using namespace std;
+
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+//	INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
+int main (int argc, char** argv)
+#else
+int main (int argc, char** argv)
+#endif
+{
+	try {
+		Client app;
+		app.init(argc, argv);
+		app.run();
+		app.shutdown();
+		return 0;
+	} catch (Ogre::Exception& e) {
+//		cerr << "Uncaught Ogre Exception: " << e.getFullDescription().c_str() << endl;
+		#ifdef WIN32
+			MessageBox(NULL, e.getFullDescription().c_str(), "Uncaught Ogre Exception!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		#endif
+	} catch (runtime_error& e) {
+		cerr << "Uncaught Runtime Error: " << e.what() << endl;
+		#ifdef WIN32
+			MessageBox(NULL, e.what(), "Uncaught Runtime Error!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		#endif
+	} catch (exception& e) {
+		cerr << "Uncaught Exception: " << e.what() << endl;
+		#ifdef WIN32
+			MessageBox(NULL, e.what(), "Uncaught Exception!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		#endif
+	}
+
+	return 1;
+}
 
 
 

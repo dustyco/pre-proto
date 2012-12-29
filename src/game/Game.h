@@ -9,7 +9,7 @@
 
 class Game {
 public:
-	Game ();
+	 Game ();
 	~Game ();
 	
 	void setRenderTarget (Ogre::RenderTarget* rt);
@@ -17,8 +17,6 @@ public:
 	
 	void pause ();
 	void unpause ();
-	
-//	void waitLoop ();
 
 	bool  m_running;
 	Clock m_clock;
