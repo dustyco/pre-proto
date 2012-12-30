@@ -66,18 +66,6 @@ ConfigManager::~ConfigManager ()
 }
 
 
-template <class T>
-void ConfigManager::set (std::string key, T value) {
-	m_p.remove(key);
-	m_d.set(key, value);
-}
-template <class T>
-T ConfigManager::get (std::string key, T default_value) {
-	try {
-		return m_p.get<T>(key);
-		return m_d.get<T>(key);
-	} catch (std::runtime_error) { set(key, default_value); return default_value; }
-}
 void ConfigManager::remove (std::string key) {
 	m_p.remove(key);
 	m_d.remove(key);

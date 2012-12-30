@@ -139,8 +139,8 @@ bool Client::keyPressed (const OIS::KeyEvent& evt) {
 		case OIS::KC_ESCAPE: running = false; break;
 		case OIS::KC_BACKSLASH:
 			// Toggle fullscreen/window
-			if (ref<DisplayManager>().getRenderWindow()->isFullScreen()) ref<ConfigManager>().set("video:display/mode", "window");
-			else ref<ConfigManager>().set("video:display/mode", "fullscreen");
+			if (ref<DisplayManager>().getRenderWindow()->isFullScreen()) ref<ConfigManager>().set("video:display.mode", "window");
+			else ref<ConfigManager>().set("video:display.mode", "fullscreen");
 			ref<DisplayManager>().applySettings();
 			break;
 		case OIS::KC_F1:

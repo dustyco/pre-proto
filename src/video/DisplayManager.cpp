@@ -123,7 +123,7 @@ void DisplayManager::windowMoved (Ogre::RenderWindow* rw) {
 		rw->getMetrics(d, d, d, x, y);
 		stringstream pos; pos << x << 'x' << y;
 //		INFO("windowMoved() %s", pos.str().c_str());
-		ref<ConfigManager>().set("video:display/window_pos", pos.str());
+		ref<ConfigManager>().set("video:display.window_pos", pos.str());
 	}
 	unlock();
 }
@@ -133,13 +133,13 @@ void DisplayManager::windowResized (Ogre::RenderWindow* rw) {
 	if (!m_resized) { m_resized = true; unlock(); return; }
 	stringstream res; res << rw->getWidth() << 'x' << rw->getHeight();
 //	INFO("windowResized() %s", res.str().c_str());
-	if (rw->isFullScreen()) config.set("video:display/fullscreen_res", res.str());
+	if (rw->isFullScreen()) config.set("video:display.fullscreen_res", res.str());
 	else {
 		unsigned int d; int x, y;
 		rw->getMetrics(d, d, d, x, y);
 		stringstream pos; pos << x << 'x' << y;
-		config.set("video:display/window_pos", pos.str());
-		config.set("video:display/window_res", res.str());
+		config.set("video:display.window_pos", pos.str());
+		config.set("video:display.window_res", res.str());
 	}
 	unlock();
 }

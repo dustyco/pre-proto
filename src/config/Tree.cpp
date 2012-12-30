@@ -14,42 +14,6 @@ namespace fs = boost::filesystem;
 #include "ConfigManager.h"
 
 
-template <class T>
-void ConfigManager::Tree::set (std::string key, T value)
-{
-	try {
-		// Parse the key string
-		std::string file;
-		typedef std::list<std::string> strings;
-		strings subs;
-		_doKey(key, file, subs);
-	
-		// Select the appropriate file (ptree)
-		ptree& tree = m_trees[file];
-		
-		// Create/overwrite
-		tree.put<T>(key, value);
-		
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to set config entry: ") + e.what()); }
-}
-
-template <class T>
-T ConfigManager::Tree::get (std::string key)
-{
-	// Parse the key string
-	std::string file;
-	typedef std::list<std::string> strings;
-	strings subs;
-	_doKey(key, file, subs);
-
-	// Select the appropriate file (ptree)
-	std::map<std::string, ptree>::iterator tree = m_trees.find(file);
-	if (tree == m_trees.end()) throw std::runtime_error("File doesn't exist: \"" + file + "\"\n");
-	
-	// Get the entry
-	try { return tree->second.get<T>(key); }
-	catch (boost::property_tree::ptree_error) { std::runtime_error("Entry doesn't exist/wrong type"); }
-}
 
 
 void ConfigManager::Tree::remove (std::string key) {
@@ -134,21 +98,17 @@ std::list<std::string> ConfigManager::Tree::_split (std::string key, std::string
 }
 
 // Parse a key string, saving it to parameters 2 and 3
-void ConfigManager::Tree::_doKey (std::string key, std::string& file, std::list<std::string>& subs) {
-	std::string temp_key = key;
+void ConfigManager::Tree::_doKey (std::string key, std::string& file, std::string& path) {
 	typedef std::list<std::string> strings;
-	subs = _split(key, ":");
+	strings subs = _split(key, ":");
 	if (subs.size()==2 && subs.back().size()>0) {
 		if (subs.front().size()>0) file = subs.front();
 		else file = CONFIG_FILE_DEFAULT;
-		temp_key = subs.back();
+		path = subs.back();
 	} else if (subs.size()==1 && subs.front().size()>0) {
 		file = CONFIG_FILE_DEFAULT;
-		temp_key = subs.front();
+		path = subs.front();
 	} else throw std::runtime_error("Invalid key string: \"" + key + "\"");
-	
-	subs = _split(temp_key, "/\\");
-	if (subs.size()<1) throw std::runtime_error("Invalid key string: \"" + key + "\"");
 }
 
 
