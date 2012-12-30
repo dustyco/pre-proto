@@ -61,7 +61,11 @@ void ConfigManager::Tree::load (std::string path)
 			try {
 				if (!fs::is_regular_file(*it)) continue;
 				if (fs::extension(*it).compare(CONFIG_FILE_EXT) != 0) continue;
-				read_info( std::string((*it).path().native().c_str()), m_trees[fs::basename(*it)] );
+#ifdef _WIN32
+				read_info( (const wchar*)((*it).path().native().c_str()), m_trees[fs::basename(*it)] );
+#else
+				read_info( (*it).path().native(), m_trees[fs::basename(*it)] );
+#endif
 			} catch (std::exception) {}
 	} catch (std::exception e) { WARNING(e.what()); }
 }

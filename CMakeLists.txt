@@ -246,19 +246,15 @@ if(MSVC)
 
 	# DLL and plugins
 	install(FILES
-		${CEGUIDIR}/bin/CEGUIBase.dll
-		${CEGUIDIR}/bin/CEGUIOgreRenderer.dll
 		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
 		${OGRE_PLUGIN_DIR_REL}/OIS.dll
 		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
-		CONFIGURATIONS Release RelWithDebInfo
+		CONFIGURATIONS Release
 	)
 	# For some reason MSVC links both release and debug ogre/ois dlls
 	install(FILES
-		${CEGUIDIR}/bin/CEGUIBase.dll
-		${CEGUIDIR}/bin/CEGUIOgreRenderer.dll
 		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
