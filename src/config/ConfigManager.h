@@ -3,10 +3,11 @@
 
 #include <stdexcept>
 #include <string>
-#include <list>
 #include <map>
+#include <list>
 
-#include "etf.h"
+#include <boost/property_tree/ptree.hpp>
+using boost::property_tree::ptree;
 
 
 #ifdef _WIN32
@@ -20,73 +21,48 @@
 #define CONFIG_FILE_EXT ".cfg"
 #define SAVE_ON_DESTROY true
 
-// Uncomment to show post-load/pre-save config values
-//#define REPORT_CONFIG
-
 
 class ConfigManager {
 public:
-	ConfigManager (int argc, char** argv);
+	 ConfigManager (int argc, char** argv);
 	~ConfigManager ();
 	
 	// Throws std::runtime_error if:
 	//  -key string is invalid
-	void        set (std::string key, std::string value);
-	void        set (std::string key, const char* value);
-	void        set (std::string key, double value);
-	void        set (std::string key, long value); // Literals must be explicit: (long)42, 42l, 42L
-	void        set (std::string key, bool value);
+	template <class T>
+	void set (std::string key, T value);
 	
-	// Recommended for normal use:
-	//  -sets and returns default_value if the value isn't there or is the wrong type
+	// Sets and returns default_value if the value isn't there or is the wrong type
 	// Throws std::runtime_error if:
 	//  -key string is invalid
-	std::string getString (std::string key, std::string default_value);
-	double      getFloat  (std::string key, double default_value);
-	long        getInt    (std::string key, long default_value);
-	bool        getBool   (std::string key, bool default_value);
-	
-	// Throws std::runtime_error if:
-	//  -key string is invalid
-	//  -the value isn't there
-	//  -it's the wrong type
-	std::string getString (std::string key);
-	double      getFloat  (std::string key);
-	long        getInt    (std::string key);
-	bool        getBool   (std::string key);
+	template <class T>
+	T    get (std::string key, T default_value);
 	
 	// Throws std::runtime_error if:
 	//  -key string is invalid
 	// Will not throw if the element already doesn't exist
-	void        remove (std::string key);
+	void remove (std::string key);
 	
-	void        load ();
-	void        save ();
-	void        report ();
+	void load ();
+	void save ();
 	
 private:
+	typedef std::map<std::string, ptree> treemap;
+	
 	struct Tree {
-		Tree ();
-		~Tree ();
-		void                   set      (std::string key, ETFDocument::etfnode value);
-		ETFDocument::etfnode   get      (std::string key);
-		void                   remove   (std::string key);
-		void                   load     (std::string path);
-		void                   save     (std::string path);
-		void                   report   ();
-		void                   _clean       ();
-		bool                   _clean_node  (ETFDocument::etfnode& node);
-		void                   _report_node (ETFDocument::etfnode& node, std::string path);
-		std::list<std::string> _split       (std::string key, std::string delimiter);
-		void                   _doKey       (std::string key, std::string& file, std::list<std::string>& subs);
+		template <class T> void set      (std::string key, T value);
+		template <class T> T    get      (std::string key);
+		void                    remove   (std::string key);
+		void                    load     (std::string path);
+		void                    save     (std::string path);
+		std::list<std::string>  _split   (std::string key, std::string delimiter);
+		void                    _doKey   (std::string key, std::string& file, std::list<std::string>& subs);
 		
-		std::map<std::string, ETFDocument> m_docs;
+		treemap                 m_trees;
 	};
 	
 	std::string          _getUserFolder ();
 	void                 _prepFolder (std::string path);
-	void                 _set (std::string key, ETFDocument::etfnode value);
-	ETFDocument::etfnode _get (std::string key);
 	
 	Tree        m_p;
 	Tree        m_d;

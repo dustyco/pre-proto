@@ -197,28 +197,28 @@ void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Og
 	REF(ConfigManager, config);
 	
 	fullscreen = DEFAULT_FULLSCREEN;
-	string mode = config.getString("video:display/mode", "auto");
+	string mode = config.get("video:display.mode", "auto");
 	     if (mode.compare("fullscreen") == 0) fullscreen = true;
 	else if (mode.compare("window")     == 0) fullscreen = false;
-	else if (mode.compare("auto")       != 0) config.set("video:display/mode", "auto");
+	else if (mode.compare("auto")       != 0) config.set("video:display.mode", "auto");
 	
 	if (fullscreen) {
 		// Get the resolution string from configmanager
-		_parseRes(config.getString("video:display/fullscreen_res", "auto"), width, height);
+		_parseRes(config.get("video:display.fullscreen_res", "auto"), width, height);
 		// See if it's sane
 		if (!_isValidRes(width, height)) {
 			// It's not
-			config.set("video:display/fullscreen_res", "auto");
+			config.set("video:display.fullscreen_res", "auto");
 			_getBestRes(width, height);
 		}
 	} else {
 		// Get the resolution string from configmanager
-		_parseRes(config.getString("video:display/window_res", "auto"), width, height);
+		_parseRes(config.get("video:display.window_res", "auto"), width, height);
 		// See if it's sane
 		int max_w, max_h; _getBestRes(max_w, max_h);
 		if (!(width>0 && height>0 && width<=max_w && height<=max_h)) {
 			// It's not
-			config.set("video:display/window_res", "auto");
+			config.set("video:display.window_res", "auto");
 			width = max_w;
 			height = max_h;
 		}
@@ -229,7 +229,7 @@ void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Og
 	misc["FSAA"] = _getValidFSAA();
 	
 	// vsync
-	misc["vsync"] = ((config.getBool("video:display/vsync", DEFAULT_VSYNC))?"true":"false");
+	misc["vsync"] = ((config.get("video:display.vsync", DEFAULT_VSYNC))?"true":"false");
 	// TODO vsyncInterval
 //	misc["vsyncInterval"] = "2";
 	
@@ -279,7 +279,7 @@ void DisplayManager::_parseRes (std::string res, int& width, int& height) {
 }
 
 string DisplayManager::_getValidFSAA () {
-	string fsaa = ref<ConfigManager>().getString("video:graphics/fsaa", "auto");
+	string fsaa = ref<ConfigManager>().get("video:graphics.fsaa", "auto");
 	if (fsaa.compare("auto") == 0) fsaa = "4";
 	
 	Ogre::StringVector possible = ref<Ogre::Root>().getRenderSystem()->getConfigOptions()["FSAA"].possibleValues;

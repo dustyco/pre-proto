@@ -2,7 +2,6 @@
 
 # Add source files names to groups
 add_sources(shared
-	etf.cpp
 	ConfigManager.cpp
 	Tree.cpp
 )

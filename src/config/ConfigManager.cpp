@@ -13,8 +13,8 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 namespace fs = boost::filesystem;
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
+//#include <boost/program_options.hpp>
+//namespace po = boost::program_options;
 
 #include "../logging/logging.h"
 #include "ConfigManager.h"
@@ -66,6 +66,24 @@ ConfigManager::~ConfigManager ()
 }
 
 
+template <class T>
+void ConfigManager::set (std::string key, T value) {
+	m_p.remove(key);
+	m_d.set(key, value);
+}
+template <class T>
+T ConfigManager::get (std::string key, T default_value) {
+	try {
+		return m_p.get<T>(key);
+		return m_d.get<T>(key);
+	} catch (std::runtime_error) { set(key, default_value); return default_value; }
+}
+void ConfigManager::remove (std::string key) {
+	m_p.remove(key);
+	m_d.remove(key);
+}
+
+
 void ConfigManager::load ()
 {
 	// Clear any existing settings
@@ -114,21 +132,9 @@ void ConfigManager::load ()
 			}
 		}
 	}
-	
-	#ifdef REPORT_CONFIG
-		WARNING("--Post-load configuration report----------------------------------");
-		m_d.report();
-		WARNING("------------------------------------------------------------------");
-	#endif
 }
 void ConfigManager::save ()
 {
-	#ifdef REPORT_CONFIG
-		WARNING("--Pre-save configuration report-----------------------------------");
-		m_d.report();
-		WARNING("------------------------------------------------------------------");
-	#endif
-	
 	std::string dir(".");
 	if (m_user_before_game) {
 		try {
@@ -172,116 +178,9 @@ void ConfigManager::save ()
 		}
 	}
 }
-void ConfigManager::report () {
-	m_p.report();
-	m_d.report();
-}
-
-
-
-void ConfigManager::set (std::string key, std::string value) {
-	_set(key, ETFDocument::etfnode(value));
-}
-void ConfigManager::set (std::string key, const char* value) {
-	_set(key, ETFDocument::etfnode(std::string(value)));
-}
-void ConfigManager::set (std::string key, double value) {
-	_set(key, ETFDocument::etfnode(value));
-}
-void ConfigManager::set (std::string key, long value) {
-	_set(key, ETFDocument::etfnode(value));
-}
-void ConfigManager::set (std::string key, bool value) {
-	_set(key, ETFDocument::etfnode(value));
-}
-
-
-std::string ConfigManager::getString (std::string key, std::string default_value) {
-	try { return getString(key); }
-	catch (std::runtime_error) { set(key, default_value); return default_value; }
-}
-double ConfigManager::getFloat (std::string key, double default_value) {
-	try { return getFloat(key); }
-	catch (std::runtime_error) { set(key, default_value); return default_value; }
-}
-long ConfigManager::getInt (std::string key, long default_value) {
-	try { return getInt(key); }
-	catch (std::runtime_error) { set(key, default_value); return default_value; }
-}
-bool ConfigManager::getBool (std::string key, bool default_value) {
-	try { return getBool(key); }
-	catch (std::runtime_error) { set(key, default_value); return default_value; }
-}
-
-
-std::string ConfigManager::getString (std::string key) {
-	try {
-		ETFDocument::etfnode node = _get(key);
-		switch (node.type) {
-			case ETFDocument::DT_STRING:
-				return boost::get<std::string>(node.value); break;
-			default:
-				throw std::runtime_error("Incorrect type"); break;
-		}
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get string: ") + e.what()); }
-}
-double ConfigManager::getFloat (std::string key) {
-	try {
-		ETFDocument::etfnode node = _get(key);
-		switch (node.type) {
-			case ETFDocument::DT_FLOAT:
-				return boost::get<double>(node.value); break;
-			case ETFDocument::DT_INT:
-				return boost::get<long>(node.value); break;
-			default:
-				throw std::runtime_error("Incorrect type"); break;
-		}
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get float: ") + e.what()); }
-}
-long ConfigManager::getInt (std::string key) {
-	try {
-		ETFDocument::etfnode node = _get(key);
-		switch (node.type) {
-			case ETFDocument::DT_INT:
-				return boost::get<long>(node.value); break;
-			case ETFDocument::DT_FLOAT:
-				return floor(boost::get<double>(node.value) + 0.5); break;
-			default:
-				throw std::runtime_error("Incorrect type"); break;
-		}
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get int: ") + e.what()); }
-}
-bool ConfigManager::getBool (std::string key) {
-	try {
-		ETFDocument::etfnode node = _get(key);
-		switch (node.type) {
-			case ETFDocument::DT_BOOL:
-				return boost::get<bool>(node.value); break;
-			default:
-				throw std::runtime_error("Incorrect type"); break;
-		}
-	} catch (std::runtime_error e) { throw std::runtime_error(std::string("Failed to get bool: ") + e.what()); }
-}
-
-
-void ConfigManager::remove (std::string key) {
-	m_p.remove(key);
-	m_d.remove(key);
-}
 
 
 // INTERNAL FUNCTIONS /////////////////////////////////////////////////////////
-
-void ConfigManager::_set (std::string key, ETFDocument::etfnode value) {
-	m_p.remove(key);
-	m_d.set(key, value);
-}
-ETFDocument::etfnode ConfigManager::_get (std::string key) {
-	try { return m_p.get(key); }
-	catch (std::runtime_error) { return m_d.get(key); }
-}
-
-
 std::string ConfigManager::_getUserFolder () {
 #ifdef _WIN32
 	// Use %APPDATA% first
