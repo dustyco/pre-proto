@@ -9,6 +9,8 @@
 #include <boost/property_tree/ptree.hpp>
 using boost::property_tree::ptree;
 
+#include "../logging/logging.h"
+
 
 #ifdef _WIN32
 	#define CONFIG_FOLDER "proto"
@@ -85,7 +87,8 @@ void ConfigManager::set (std::string key, T value) {
 template <class T>
 T ConfigManager::get (std::string key, T default_value) {
 	try {
-		return m_p.get<T>(key);
+		try { return m_p.get<T>(key); }
+		catch (std::runtime_error) {}
 		return m_d.get<T>(key);
 	} catch (std::runtime_error) { set(key, default_value); return default_value; }
 }
@@ -110,7 +113,7 @@ T ConfigManager::Tree::get (std::string key)
 	// Parse the key string
 	std::string file, path;
 	_doKey(key, file, path);
-
+	
 	// Select the appropriate file (ptree)
 	std::map<std::string, ptree>::iterator tree = m_trees.find(file);
 	if (tree == m_trees.end()) throw std::runtime_error("File doesn't exist: \"" + file + "\"\n");
