@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stack>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/property_tree/info_parser.hpp>
 using boost::property_tree::ptree;
 #include <boost/tokenizer.hpp>
@@ -61,7 +62,7 @@ void ConfigManager::Tree::load (std::string path)
 			try {
 				if (!fs::is_regular_file(*it)) continue;
 				if (fs::extension(*it).compare(CONFIG_FILE_EXT) != 0) continue;
-				read_info( (*it).path().native(), m_trees[fs::basename(*it)] );
+				read_info( boost::lexical_cast<std::string>((*it).path().native()), m_trees[fs::basename(*it)] );
 			} catch (std::exception) {}
 	} catch (std::exception e) { WARNING(e.what()); }
 }
