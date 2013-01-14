@@ -1,12 +1,10 @@
 
 
-#add_subdirectory(entities)
+add_subdirectory(entity)
 
 # Add source files names to groups
-add_sources(client
-	Game.cpp
-	ComponentRenderable.cpp
-	Renderable.cpp
+add_sources(shared
+	Sim.cpp
 )
 
 # Add library names to groups

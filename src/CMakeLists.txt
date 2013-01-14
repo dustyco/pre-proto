@@ -1,11 +1,13 @@
 
 
+add_subdirectory(clientgame)
 add_subdirectory(config)
-add_subdirectory(util)
-#add_subdirectory(profiler)
-add_subdirectory(logging)
 add_subdirectory(input)
-add_subdirectory(game)
+add_subdirectory(logging)
+#add_subdirectory(profiler)
+add_subdirectory(servergame)
+add_subdirectory(sim)
+add_subdirectory(util)
 add_subdirectory(video)
 
 # Add source file names to groups

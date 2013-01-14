@@ -1,7 +1,11 @@
 
 
+#add_subdirectory(entity)
+
 # Add source files names to groups
-add_sources(client Entity.cpp EntityRegistry.cpp)
+#add_sources(shared
+#	Sim.cpp
+#)
 
 # Add library names to groups
 #require_libraries(groupname libraryname)

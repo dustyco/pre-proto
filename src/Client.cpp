@@ -63,8 +63,8 @@ void Client::init (int argc, char **argv) {
 	m_app_viewport->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f, 1.0f));
 	m_app_viewport->setCamera(m_app_camera);
 	
-	m_game_a = new Game;
-	m_game_b = new Game;
+	m_game_a = new ClientGame;
+	m_game_b = new ClientGame;
 	
 	// Look at a only
 	m_game_shift = 1;

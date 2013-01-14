@@ -6,7 +6,7 @@
 
 #include "common.h"
 #include "util/Clock.h"
-#include "game/Game.h"
+#include "clientgame/ClientGame.h"
 
 #ifndef OGRE_PLUGIN_DIR
 #define OGRE_PLUGIN_DIR "."
@@ -55,9 +55,9 @@ private:
 	float m_game_shift;
 
 private:
-	Clock m_clock;
-	Game* m_game_a;
-	Game* m_game_b;
+	Clock       m_clock;
+	ClientGame* m_game_a;
+	ClientGame* m_game_b;
 	
 	Ogre::SceneManager* m_app_sceneMgr;
 	Ogre::Camera*       m_app_camera;

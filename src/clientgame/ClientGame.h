@@ -4,13 +4,15 @@
 #include <OGRE/Ogre.h>
 
 #include "../util/Clock.h"
-#include "ComponentRenderable.h"
+#include "../sim/Sim.h"
 
 
-class Game {
+// 
+
+class ClientGame {
 public:
-	 Game ();
-	~Game ();
+	 ClientGame ();
+	~ClientGame ();
 	
 	void setRenderTarget (Ogre::RenderTarget* rt);
 	void update ();
@@ -21,9 +23,13 @@ public:
 	bool  m_running;
 	Clock m_clock;
 	
+private:
 	Ogre::RenderTarget*  m_rt;
 	Ogre::Viewport*      m_viewport;
-
-private:
-	ComponentRenderable* m_renderable;
+	
+	Ogre::SceneManager*  m_scene;
+	Ogre::Camera*        m_camera;
+	Ogre::SceneNode*     m_cam_node;
+	
+	Sim*                 m_sim;
 };

@@ -3,7 +3,9 @@
 
 #include "common.h"
 #include "util/Clock.h"
-#include "game/Game.h"
+
+// Not implemented yet
+//#include "servergame/ServerGame.h"
 
 
 class Server {
