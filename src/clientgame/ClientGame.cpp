@@ -43,7 +43,7 @@ void ClientGame::setRenderTarget (Ogre::RenderTarget* rt) {
 
 void ClientGame::update () {
 	// (Potentially) virtual time
-	double time = 1e-6*m_clock.getDurationSinceEpoch().total_microseconds();
+	double time = boost::chrono::duration<double>(m_clock.getDurationSinceEpoch()).count();
 	
 	float aspect = float(m_rt->getWidth()) / m_rt->getHeight();
 	

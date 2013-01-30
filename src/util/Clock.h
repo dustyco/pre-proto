@@ -1,8 +1,7 @@
 #pragma once
 
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/chrono.hpp>
 
 
 // A variable speed clock that provides:
@@ -12,8 +11,8 @@
 //
 class Clock : private boost::mutex {
 public:
-	typedef boost::posix_time::ptime         time;
-	typedef boost::posix_time::time_duration duration;
+	typedef boost::chrono::steady_clock::time_point time;
+	typedef boost::chrono::steady_clock::duration   duration;
 
 public:
 	Clock () : m_warped(false) {};

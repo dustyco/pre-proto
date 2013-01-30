@@ -104,7 +104,7 @@ bool Client::frameStarted (const Ogre::FrameEvent& evt) {
 	REF(DisplayManager, display);
 	
 	// Real time
-	double time = 1e-6*m_clock.getDurationSinceEpoch().total_microseconds();
+	double time = boost::chrono::duration<double>(m_clock.getDurationSinceEpoch()).count();
 	
 	// See if we should stop
 	if (display.isClosing()) { INFO("Display is closing"); running = false; }
