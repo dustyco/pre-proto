@@ -6,6 +6,9 @@
 #include <OGRE/Ogre.h>
 
 
+// Query a buffered list of events since the last check
+// Multiple subscribers register so that each gets their own buffer
+// Thread-safe
 class InputManager :
 	public Ogre::FrameListener,
 	public OIS::KeyListener,
@@ -13,8 +16,31 @@ class InputManager :
 	public boost::recursive_mutex
 {
 public:
+	typedef int SubscriberID;
+	
+	enum EventType { MOUSE, KEY, JOY };
+	
+	struct Event {
+		EventType type;
+	};
+	struct MouseEvent : Event {
+		
+	};
+	struct KeyEvent : Event {
+		
+	};
+	struct JoyEvent : Event {
+		
+	};
+	typedef std::list<Event> EventList;
+	
+public:
 	InputManager ();
 	~InputManager ();
+	
+	SubscriberID subscribe   ();
+	void         unsubscribe (SubscriberID id);
+	bool         nextEvent   (SubscriberID id, Event& event);
 	
 	void _connect ();
 	void _disconnect ();
@@ -50,6 +76,8 @@ public:
 	bool frameStarted         (const Ogre::FrameEvent& evt);
 	
 private:
+	std::list<Event>   m_events;
+	
 	bool               m_mouse_freedom;
 	bool               m_reconnect;
 	

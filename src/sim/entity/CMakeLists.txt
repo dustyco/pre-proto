@@ -6,7 +6,7 @@
 add_sources(shared
 	base.cpp
 	render.cpp
-	position.cpp
+	physics.cpp
 )
 
 # Add library names to groups

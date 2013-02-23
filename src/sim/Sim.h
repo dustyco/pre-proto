@@ -3,12 +3,15 @@
 
 #include "../util/Clock.h"
 #include "entity/entity.h"
+#include "CopyableScene.h"
 
 
 class Sim {
 public:
 	 Sim ();
 	~Sim ();
+	
+	void getLatestScene (CopyableScene& scene);
 	
 	void update ();
 	
@@ -19,6 +22,8 @@ public:
 	Clock m_clock;
 
 private:
-	entity::RenderSystem*   m_render;
-	entity::PositionSystem* m_position;
+	CopyableScene          m_latest;
+	
+	entity::RenderSystem*  m_render;
+	entity::PhysicsSystem* m_physics;
 };

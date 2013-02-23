@@ -22,6 +22,10 @@ require_libraries(client
 if (UNIX)
 	require_libraries(shared pthread)
 endif ()
+require_libraries(shared
+	${BULLET_LIBRARIES}
+)
+message("Bullet_LIBRARIES: ${BULLET_LIBRARIES}")
 
 # Call last to pass group variables up to the parent
 propagate_groups()

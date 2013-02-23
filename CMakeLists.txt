@@ -141,11 +141,8 @@ include_directories(${OIS_INCLUDE_DIRS})
 
 # Find Bullet #################################################################
 # Doesn't work on windows yet
-#find_package(Bullet REQUIRED)
-#if(NOT BULLET_FOUND)
-#	message(SEND_ERROR "Failed to find Bullet.")
-#endif()
-#include_directories(${BULLET_INCLUDE_DIRS})
+find_package(Bullet REQUIRED)
+include_directories(${BULLET_INCLUDE_DIRS})
 
 # Find Boost ##################################################################
 #if(WIN32 OR APPLE)

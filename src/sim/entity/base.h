@@ -12,8 +12,8 @@ namespace entity {
 	// Component type masks
 	typedef uint8_t ct_mask;
 	ct_mask static  CT_I = 0;
-	const static ct_mask CT_RENDER   = 1<<CT_I++;
-	const static ct_mask CT_POSITION = 1<<CT_I++;
+	const static ct_mask CT_RENDER  = 1<<CT_I++;
+	const static ct_mask CT_PHYSICS = 1<<CT_I++;
 	
 	
 	struct Entity;
