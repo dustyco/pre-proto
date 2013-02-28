@@ -44,7 +44,10 @@ void Clock::setEpoch (time epoch) {
 	m_epoch = epoch;
 }
 Clock::duration Clock::getDurationSinceEpoch () {
-	return getTime() - m_epoch;
+	lock();
+		duration r = getTime() - m_epoch;
+	unlock();
+	return r;
 }
 
 /*

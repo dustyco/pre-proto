@@ -3,7 +3,6 @@
 #include <sstream>
 #include <math.h>
 
-#include "config/config.h"
 #include "video/video.h"
 #include "input/input.h"
 
@@ -47,7 +46,8 @@ void Client::init (int argc, char **argv) {
 	m_height = -1;
 
 	// Initialize input and add a listener
-	set<InputManager>().registerKeyListener(this);
+//	set<InputManager>().registerKeyListener(this);
+	m_sub = set<InputManager>().subscribe();
 	
 	// Set resource search paths
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation("media",                    "FileSystem", "General");
@@ -86,7 +86,6 @@ void Client::run () {
 }
 
 void Client::shutdown () {
-	ref<InputManager>().unregisterKeyListener(this);
 	ref<Ogre::Root>().shutdown();
 	delete ptr<ConfigManager>();
 	
@@ -96,15 +95,47 @@ void Client::shutdown () {
 
 // Early start on cpu-based updates
 // Input here will be up to 1 extra frame older than frameStarted
-bool Client::frameRenderingQueued (const Ogre::FrameEvent& evt) {
+bool Client::frameRenderingQueued (const Ogre::FrameEvent& evt)
+{
 	return true;
 }
 // Normal frame start
-bool Client::frameStarted (const Ogre::FrameEvent& evt) {
+bool Client::frameStarted (const Ogre::FrameEvent& evt)
+{
 	REF(DisplayManager, display);
+	REF(InputManager, input);
+	REF(ConfigManager, config);
 	
-	// Real time
 	double time = boost::chrono::duration<double>(m_clock.getDurationSinceEpoch()).count();
+	
+	// Input
+	InputManager::Event event;
+	while (input.nextEvent(m_sub, event))
+	switch (event.type) {
+		case InputManager::Event::KEY:
+			if (event.press)
+			switch (event.key) {
+				case OIS::KC_ESCAPE: running = false; break;
+				case OIS::KC_BACKSLASH:
+					// Toggle fullscreen/window
+					if (display.getRenderWindow()->isFullScreen()) config.set("video:display.mode", "window");
+					else                                           config.set("video:display.mode", "fullscreen");
+					display.applySettings();
+					break;
+				case OIS::KC_F1:
+					// Toggle mouse mode
+					if (input.getMouseFreedom()) input.setMouseFreedom(false);
+					else input.setMouseFreedom(true);
+					break;
+			}
+			break;
+		
+		case InputManager::Event::MOUSE:
+			break;
+			
+		case InputManager::Event::JOY:
+			break;
+	}
 	
 	// See if we should stop
 	if (display.isClosing()) { INFO("Display is closing"); running = false; }
@@ -130,27 +161,9 @@ bool Client::frameStarted (const Ogre::FrameEvent& evt) {
 
 	display.unlock_shared();
 	
+//	std::cout << "frame end" << std::endl;
 	return true;
 }
-
-bool Client::keyPressed (const OIS::KeyEvent& evt) {
-	REF(InputManager, input);
-	switch (evt.key) {
-		case OIS::KC_ESCAPE: running = false; break;
-		case OIS::KC_BACKSLASH:
-			// Toggle fullscreen/window
-			if (ref<DisplayManager>().getRenderWindow()->isFullScreen()) ref<ConfigManager>().set("video:display.mode", "window");
-			else ref<ConfigManager>().set("video:display.mode", "fullscreen");
-			ref<DisplayManager>().applySettings();
-			break;
-		case OIS::KC_F1:
-			// Toggle mouse mode
-			if (input.getMouseFreedom()) input.setMouseFreedom(false);
-			else input.setMouseFreedom(true);
-			break;
-	} return true;
-}
-bool Client::keyReleased(const OIS::KeyEvent& evt) { return true; }
 
 void Client::checkDisplaySize () {
 	Ogre::RenderWindow& window = *(ref<DisplayManager>().getRenderWindow());

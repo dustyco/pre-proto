@@ -2,6 +2,7 @@
 
 
 #include <boost/chrono.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 
 // A variable speed clock that provides:
@@ -9,7 +10,7 @@
 //   -Duration since a specific epoch
 // and can be waited on
 //
-class Clock : private boost::mutex {
+class Clock : private boost::recursive_mutex {
 public:
 	typedef boost::chrono::steady_clock::time_point time;
 	typedef boost::chrono::steady_clock::duration   duration;

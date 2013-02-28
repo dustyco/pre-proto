@@ -10,52 +10,41 @@
 // Multiple subscribers register so that each gets their own buffer
 // Thread-safe
 class InputManager :
-	public Ogre::FrameListener,
 	public OIS::KeyListener,
 	public OIS::MouseListener,
 	public boost::recursive_mutex
 {
 public:
-	typedef int SubscriberID;
-	
-	enum EventType { MOUSE, KEY, JOY };
-	
 	struct Event {
+		enum EventType { MOUSE, KEY, JOY };
 		EventType type;
-	};
-	struct MouseEvent : Event {
+		OIS::MouseState state;
+		OIS::KeyCode key;
+		bool press;
 		
-	};
-	struct KeyEvent : Event {
-		
-	};
-	struct JoyEvent : Event {
-		
+		Event () {}
+		Event (EventType type) : type(type) {}
 	};
 	typedef std::list<Event> EventList;
 	
+	struct Subscription { EventList::iterator next; };
+	typedef std::list<Subscription*> SubList;
+	
 public:
-	InputManager ();
+	 InputManager ();
 	~InputManager ();
 	
-	SubscriberID subscribe   ();
-	void         unsubscribe (SubscriberID id);
-	bool         nextEvent   (SubscriberID id, Event& event);
+	Subscription* subscribe   ();
+	void          unsubscribe (Subscription* sub);
+	bool          nextEvent   (Subscription* sub, Event& event);
 	
 	void _connect ();
 	void _disconnect ();
 	
 	// TRUE:  Visible, absolute movement
-	// FALSE: Hidden, captured, relative movement
+	// FALSE: Hidden, relative movement
 	bool getMouseFreedom ();
 	void setMouseFreedom (bool);
-	
-	// EXTERNAL LISTENERS /////////////////////////////////////////////////////
-	void registerKeyListener   (OIS::KeyListener* l);
-	void registerMouseListener (OIS::MouseListener* l);
-	
-	void unregisterKeyListener   (OIS::KeyListener* l);
-	void unregisterMouseListener (OIS::MouseListener* l);
 	
 	// QUERIES ////////////////////////////////////////////////////////////////
 	Ogre::Vector2   mousePosition ();
@@ -71,18 +60,16 @@ public:
 	bool mousePressed  (const OIS::MouseEvent& evt, OIS::MouseButtonID bid);
 	bool mouseReleased (const OIS::MouseEvent& evt, OIS::MouseButtonID bid);
 	bool mouseMoved    (const OIS::MouseEvent& evt);
-	
-	bool frameRenderingQueued (const Ogre::FrameEvent& evt);
-	bool frameStarted         (const Ogre::FrameEvent& evt);
+
+private:
+	void pushEvent (Event& event);
 	
 private:
-	std::list<Event>   m_events;
+	EventList          m_events;
+	SubList            m_subs;
 	
 	bool               m_mouse_freedom;
 	bool               m_reconnect;
-	
-	std::list<OIS::KeyListener*>   m_keyListeners;
-	std::list<OIS::MouseListener*> m_mouseListeners;
 	
 	OIS::MouseState    m_mouseState;
 	Ogre::Vector2      m_mousePos;

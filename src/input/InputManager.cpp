@@ -13,18 +13,66 @@ using namespace std;
 
 InputManager::InputManager () {
 	lock();
-	
-	m_mouse_freedom = true;
-	m_reconnect = false;
-	_connect();
-	
+		m_mouse_freedom = true;
+		m_reconnect = false;
+		_connect();
+	unlock();
+}
+InputManager::~InputManager () {
+	lock();
+		_disconnect();
 	unlock();
 }
 
-InputManager::~InputManager () {
+
+InputManager::Subscription* InputManager::subscribe () {
 	lock();
-	_disconnect();
+		Subscription* sub = new Subscription;
+		sub->next = m_events.begin();
+		m_subs.push_back(sub);
 	unlock();
+	return sub;
+}
+void InputManager::unsubscribe (InputManager::Subscription* sub) {
+	lock();
+	m_subs.remove(sub);
+	
+	// TODO Pop any old events that were waiting for it
+	
+	unlock();
+}
+bool InputManager::nextEvent (InputManager::Subscription* sub, InputManager::Event& event) {
+	lock();
+		bool r = true;
+	
+		// Add any new events
+		m_mouse->capture();
+		m_keybd->capture();
+		m_mouseState = m_mouse->getMouseState();
+		if (m_reconnect) {
+			m_reconnect = false;
+			_disconnect();
+			_connect();
+		}
+	
+		// Are there events waiting for this subscriber?
+		if (sub->next!=m_events.end()) {
+			// Copy the next event and advance subscriber's pointer
+			event = *(sub->next++);
+		
+			// Pop the oldest event if all subscribers are past it
+			bool pop = true;
+			for (SubList::iterator it=m_subs.begin(); it!=m_subs.end(); it++) {
+				if ((*it)->next==m_events.begin()) {
+					pop = false;
+					break;
+				}
+			}
+			if (pop) m_events.pop_front();
+		} else r = false;
+	
+	unlock();
+	return r;
 }
 	
 void InputManager::_connect () {
@@ -55,7 +103,6 @@ void InputManager::_connect () {
 	m_mouse = static_cast<OIS::Mouse*> (m_inMgr->createInputObject(OIS::OISMouse, true));
 	m_keybd->setEventCallback(this);
 	m_mouse->setEventCallback(this);
-	ref<Ogre::Root>().addFrameListener(this);
 }
 void InputManager::_disconnect () {
 	m_keybd->setEventCallback(0);
@@ -65,38 +112,21 @@ void InputManager::_disconnect () {
 	OIS::InputManager::destroyInputSystem(m_inMgr);
 	m_keybd = 0;
 	m_mouse = 0;
-	ref<Ogre::Root>().removeFrameListener(this);
 }
-	
+
 bool InputManager::getMouseFreedom () {
 	lock();
-	bool mouse_freedom = m_mouse_freedom;
+		bool mouse_freedom = m_mouse_freedom;
 	unlock();
 	return mouse_freedom;
 }
 void InputManager::setMouseFreedom (bool mouse_freedom) {
 	lock();
-	if (m_mouse_freedom != mouse_freedom) {
-		m_mouse_freedom = mouse_freedom;
-		m_reconnect = true;
-	}
+		if (m_mouse_freedom != mouse_freedom) {
+			m_mouse_freedom = mouse_freedom;
+			m_reconnect = true;
+		}
 	unlock();
-}
-
-void InputManager::registerKeyListener(OIS::KeyListener* l) {
-	m_keyListeners.push_front(l);
-	m_keyListeners.unique();
-}
-void InputManager::registerMouseListener(OIS::MouseListener* l) {
-	m_mouseListeners.push_front(l);
-	m_mouseListeners.unique();
-}
-
-void InputManager::unregisterKeyListener(OIS::KeyListener* l) {
-	m_keyListeners.remove(l);
-}
-void InputManager::unregisterMouseListener(OIS::MouseListener* l) {
-	m_mouseListeners.remove(l);
 }
 
 
@@ -118,80 +148,54 @@ bool InputManager::isKeyPressed(OIS::KeyCode k) {
 }
 
 
-// CALLBACKS //////////////////////////////////////////////////////////////////
-// FRAME LISTENER /////////////////////////////////////////////////////////////
-bool InputManager::frameRenderingQueued(const Ogre::FrameEvent &evt) {
-	return true;
-}
-
-bool InputManager::frameStarted(const Ogre::FrameEvent &evt) {
-	lock();
-	m_mouse->capture();
-	m_keybd->capture();
-	m_mouseState = m_mouse->getMouseState();
-	if (m_reconnect) {
-		m_reconnect = false;
-		_disconnect();
-		_connect();
+void InputManager::pushEvent (Event& event) {
+	m_events.push_back(event);
+	for (SubList::iterator it=m_subs.begin(); it!=m_subs.end(); it++) {
+		if ((*it)->next==m_events.end()) {
+			((*it)->next)--;
+		}
 	}
-	unlock();
-	return true;
 }
 
+
+// CALLBACKS //////////////////////////////////////////////////////////////////
 // KEY LISTENER ///////////////////////////////////////////////////////////////
 bool InputManager::keyPressed(const OIS::KeyEvent& evt) {
-	list<OIS::KeyListener*>::iterator i;
-	for(i=m_keyListeners.begin();i != m_keyListeners.end();i++) {
-		if(!(*i)->keyPressed(evt)) {
-			m_keyListeners.erase(i);
-		}
-	}
+	Event event(Event::KEY);
+	event.press = true;
+	event.key = evt.key;
+	pushEvent(event);
 	return true;
 }
-
 bool InputManager::keyReleased(const OIS::KeyEvent& evt) {
-	list<OIS::KeyListener*>::iterator i;
-	for(i=m_keyListeners.begin();i != m_keyListeners.end();i++) {
-		if(!(*i)->keyReleased(evt)) {
-			m_keyListeners.erase(i);
-		}
-	}
+	Event event(Event::KEY);
+	event.press = false;
+	event.key = evt.key;
+	pushEvent(event);
 	return true;
 }
 
 bool InputManager::mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID bid) {
 	m_mouseState = evt.state;
-	
-	list<OIS::MouseListener*>::iterator i;
-	for(i=m_mouseListeners.begin();i != m_mouseListeners.end();i++) {
-		if(!(*i)->mousePressed(evt, bid)) {
-			m_mouseListeners.erase(i);
-		}
-	}
+	Event event(Event::MOUSE);
+	event.state = evt.state;
+	pushEvent(event);
 	return true;
 }
 
 bool InputManager::mouseMoved(const OIS::MouseEvent& evt) {
 	m_mouseState = evt.state;
 	m_mousePos += Ogre::Vector2(evt.state.X.rel, evt.state.Y.rel);
-	
-	list<OIS::MouseListener*>::iterator i;
-	for(i=m_mouseListeners.begin();i != m_mouseListeners.end();i++) {
-		if(!(*i)->mouseMoved(evt)) {
-			m_mouseListeners.erase(i);
-		}
-	}
+	Event event(Event::MOUSE);
+	event.state = evt.state;
+	pushEvent(event);
 	return true;
 }
 
 bool InputManager::mouseReleased(const OIS::MouseEvent& evt, OIS::MouseButtonID bid) {
 	m_mouseState = evt.state;
-	
-	list<OIS::MouseListener*>::iterator i;
-	for(i=m_mouseListeners.begin();i != m_mouseListeners.end();i++) {
-		if(!(*i)->mouseReleased(evt, bid)) {
-			m_mouseListeners.erase(i);
-		}
-	}
+	Event event(Event::MOUSE);
+	event.state = evt.state;
+	pushEvent(event);
 	return true;
 }

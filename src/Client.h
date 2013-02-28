@@ -5,6 +5,7 @@
 #include <OIS/OIS.h>
 
 #include "common.h"
+#include "config/config.h"
 #include "util/Clock.h"
 #include "clientgame/ClientGame.h"
 
@@ -14,8 +15,7 @@
 
 
 class Client :
-	public Ogre::FrameListener,
-	public OIS::KeyListener
+	public Ogre::FrameListener
 {
 public:
 	void init (int argc, char** argv);
@@ -25,10 +25,6 @@ public:
 	// Ogre::FrameListener
 	bool frameStarted         (const Ogre::FrameEvent& evt);
 	bool frameRenderingQueued (const Ogre::FrameEvent& evt);
-	
-	// OIS::KeyListener
-	bool keyPressed  (const OIS::KeyEvent& evt);
-	bool keyReleased (const OIS::KeyEvent& evt);
 
 private:
 	// Recreate RTT's for the game panels if the display changed size
@@ -62,6 +58,8 @@ private:
 	Ogre::SceneManager* m_app_sceneMgr;
 	Ogre::Camera*       m_app_camera;
 	Ogre::Viewport*     m_app_viewport;
+	
+	InputManager::Subscription* m_sub;
 	
 	bool running;
 };
