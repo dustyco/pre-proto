@@ -1,7 +1,6 @@
 #pragma once
 
 
-#include <boost/thread/shared_mutex.hpp>
 #include <OGRE/Ogre.h>
 #include "../config/config.h"
 
@@ -13,7 +12,7 @@
 
 // In charge of the ogre window according to settings in the ConfigManager
 // Outside systems are to use the applySettings function
-class DisplayManager : public boost::shared_mutex, public Ogre::WindowEventListener {
+class DisplayManager : public Ogre::WindowEventListener {
 public:
 	DisplayManager ();
 	~DisplayManager ();

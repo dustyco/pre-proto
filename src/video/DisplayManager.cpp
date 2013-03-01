@@ -11,8 +11,6 @@ using namespace std;
 
 DisplayManager::DisplayManager ()
 {
-	lock();
-	
 	m_closing = false;
 
 /*	// List rendersystem options
@@ -40,8 +38,6 @@ DisplayManager::DisplayManager ()
 	// Listen for window events
 	m_moved = m_resized = false;
 	Ogre::WindowEventUtilities::addWindowEventListener(m_renderWindow, this);
-	
-	unlock();
 }
 DisplayManager::~DisplayManager () {
 	Ogre::WindowEventUtilities::removeWindowEventListener(m_renderWindow, this);
@@ -50,7 +46,6 @@ DisplayManager::~DisplayManager () {
 
 void DisplayManager::applySettings ()
 {
-	lock();
 	m_moved = m_resized = false;
 	
 	// Get intended settings
@@ -73,51 +68,34 @@ void DisplayManager::applySettings ()
 		if (new_misc["vsync"].compare((m_renderWindow->isVSyncEnabled())?"true":"false") != 0) 
 			m_renderWindow->setVSyncEnabled(!m_renderWindow->isVSyncEnabled());
 	}
-	
-	unlock();
 }
 
 void DisplayManager::reinitWindow () {
-	lock();
-	
 	ref<Ogre::Root>().destroyRenderTarget(m_renderWindow);
 	_initWindow();
-	
-	unlock();
 }
 
 bool DisplayManager::windowIsNew () {
-	lock_shared();
-	
 	if (m_window_is_new) {
 		m_window_is_new = false;
-		unlock_shared();
 		return true;
 	}
-	
-	unlock_shared();
 	return false;
 }
 
 bool DisplayManager::isClosing () {
-	lock_shared();
-	
 	if (m_closing) {
 		m_closing = false;
-		unlock_shared();
 		return true;
 	}
-	
-	unlock_shared();
 	return false;
 }
 
 
 // WindowEventListener CALLBACKS //////////////////////////////////////////////
 void DisplayManager::windowMoved (Ogre::RenderWindow* rw) {
-	lock();
 	if (!rw->isFullScreen()) {
-		if (!m_moved) { m_moved = true; unlock(); return; }
+		if (!m_moved) { m_moved = true; return; }
 	
 		unsigned int d; int x, y;
 		rw->getMetrics(d, d, d, x, y);
@@ -125,12 +103,10 @@ void DisplayManager::windowMoved (Ogre::RenderWindow* rw) {
 //		INFO("windowMoved() %s", pos.str().c_str());
 		ref<ConfigManager>().set("video:display.window_pos", pos.str());
 	}
-	unlock();
 }
 void DisplayManager::windowResized (Ogre::RenderWindow* rw) {
-	lock();
 	REF(ConfigManager, config);
-	if (!m_resized) { m_resized = true; unlock(); return; }
+	if (!m_resized) { m_resized = true; return; }
 	stringstream res; res << rw->getWidth() << 'x' << rw->getHeight();
 //	INFO("windowResized() %s", res.str().c_str());
 	if (rw->isFullScreen()) config.set("video:display.fullscreen_res", res.str());
@@ -141,15 +117,12 @@ void DisplayManager::windowResized (Ogre::RenderWindow* rw) {
 		config.set("video:display.window_pos", pos.str());
 		config.set("video:display.window_res", res.str());
 	}
-	unlock();
 }
 void DisplayManager::windowFocusChange (Ogre::RenderWindow* rw) {
 //	INFO("windowFocusChange()");
 }
 bool DisplayManager::windowClosing (Ogre::RenderWindow* rw) {
-	lock();
 	m_closing = true;
-	unlock();
 	return false;
 }
 void DisplayManager::windowClosed (Ogre::RenderWindow* rw) {

@@ -140,8 +140,6 @@ bool Client::frameStarted (const Ogre::FrameEvent& evt)
 	// See if we should stop
 	if (display.isClosing()) { INFO("Display is closing"); running = false; }
 	if (!running) return false;
-
-	display.lock_shared();
 	
 	// See if we need to resize game panel RTT's
 	checkDisplaySize();
@@ -158,10 +156,7 @@ bool Client::frameStarted (const Ogre::FrameEvent& evt)
 	
 	m_game_a->update();
 //	m_game_b->update();
-
-	display.unlock_shared();
 	
-//	std::cout << "frame end" << std::endl;
 	return true;
 }
 
