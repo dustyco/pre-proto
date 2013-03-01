@@ -1,9 +1,11 @@
 #pragma once
 
 
-#include <boost/thread/recursive_mutex.hpp>
 #include <OIS/OIS.h>
-#include <OGRE/Ogre.h>
+#include <boost/thread/recursive_mutex.hpp>
+
+#include "../util/linear_algebra.h"
+using namespace linear_algebra;
 
 
 // Query a buffered list of events since the last check
@@ -16,14 +18,14 @@ class InputManager :
 {
 public:
 	struct Event {
-		enum EventType { MOUSE, KEY, JOY };
-		EventType type;
+		enum Type { MOUSE, KEY, JOY };
+		Type            type;
 		OIS::MouseState state;
-		OIS::KeyCode key;
-		bool press;
+		OIS::KeyCode    key;
+		bool            press;
 		
 		Event () {}
-		Event (EventType type) : type(type) {}
+		Event (Type type) : type(type) {}
 	};
 	typedef std::list<Event> EventList;
 	
@@ -34,35 +36,30 @@ public:
 	 InputManager ();
 	~InputManager ();
 	
+	// Event subscription
 	Subscription* subscribe   ();
 	void          unsubscribe (Subscription* sub);
 	bool          nextEvent   (Subscription* sub, Event& event);
 	
-	void _connect ();
-	void _disconnect ();
+	// Queries
+	bool            getMouseFreedom ();
+	void            setMouseFreedom (bool);
+	bool            isMousePressed  (OIS::MouseButtonID btn);
+	bool            isKeyPressed    (OIS::KeyCode k);
+	OIS::MouseState getMouseState   ();
+	vec<2,int>      mousePosition   ();
 	
-	// TRUE:  Visible, absolute movement
-	// FALSE: Hidden, relative movement
-	bool getMouseFreedom ();
-	void setMouseFreedom (bool);
-	
-	// QUERIES ////////////////////////////////////////////////////////////////
-	Ogre::Vector2   mousePosition ();
-	OIS::MouseState getMouseState ();
-	
-	bool isMousePressed (OIS::MouseButtonID btn);
-	bool isKeyPressed   (OIS::KeyCode k);
-	
-	// CALLBACKS //////////////////////////////////////////////////////////////
-	bool keyPressed  (const OIS::KeyEvent& evt);
-	bool keyReleased (const OIS::KeyEvent& evt);
-	
+	// Non-API callbacks
+	bool keyPressed    (const OIS::KeyEvent& evt);
+	bool keyReleased   (const OIS::KeyEvent& evt);
 	bool mousePressed  (const OIS::MouseEvent& evt, OIS::MouseButtonID bid);
 	bool mouseReleased (const OIS::MouseEvent& evt, OIS::MouseButtonID bid);
 	bool mouseMoved    (const OIS::MouseEvent& evt);
 
 private:
-	void pushEvent (Event& event);
+	void connect    ();
+	void disconnect ();
+	void pushEvent  (Event& event);
 	
 private:
 	EventList          m_events;
@@ -72,7 +69,7 @@ private:
 	bool               m_reconnect;
 	
 	OIS::MouseState    m_mouseState;
-	Ogre::Vector2      m_mousePos;
+	vec<2,int>         m_mousePos;
 	
 	OIS::Keyboard*     m_keybd;
 	OIS::Mouse*        m_mouse;
