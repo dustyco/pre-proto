@@ -4,7 +4,9 @@
 #include <iostream>
 using namespace std;
 
-#include <boost/thread/locks.hpp>
+#ifndef PCH
+	#include <boost/thread/locks.hpp>
+#endif
 
 #include "../logging/logging.h"
 #include "../util/singleton.h"

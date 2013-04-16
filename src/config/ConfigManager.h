@@ -6,7 +6,9 @@
 #include <map>
 #include <list>
 
-#include <boost/property_tree/ptree.hpp>
+#ifndef PCH
+	#include <boost/property_tree/ptree.hpp>
+#endif
 using boost::property_tree::ptree;
 
 #include "../logging/logging.h"

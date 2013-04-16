@@ -4,10 +4,15 @@
 #include <sstream>
 #include <stack>
 
-#include <boost/property_tree/info_parser.hpp>
+#ifndef PCH
+	#warning no-pch
+	#include <boost/property_tree/info_parser.hpp>
+	#include <boost/tokenizer.hpp>
+	#include <boost/filesystem.hpp>
+#else
+	#warning pch
+#endif
 using boost::property_tree::ptree;
-#include <boost/tokenizer.hpp>
-#include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 
 #include "../logging/logging.h"

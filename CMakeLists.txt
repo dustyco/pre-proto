@@ -90,6 +90,84 @@ macro(propagate_groups)
 	endif()
 endmacro()
 
+# Precompiled header ############################################################
+if("${PCH}" STREQUAL "")
+	set(PCH TRUE)
+endif()
+MACRO(make_pch _targetName _input)
+	if(PCH)
+		GET_FILENAME_COMPONENT(_inputWe ${_input} NAME_WE)
+		SET(pch_source ${_inputWe}.cpp)
+		FOREACH(arg ${ARGN})
+			IF(arg STREQUAL FORCEINCLUDE)
+				SET(FORCEINCLUDE ON)
+			ELSE(arg STREQUAL FORCEINCLUDE)
+				SET(FORCEINCLUDE OFF)
+			ENDIF(arg STREQUAL FORCEINCLUDE)
+		ENDFOREACH(arg)
+	 
+		IF(MSVC)
+			message(">> PCH: MSVC")
+			
+			GET_TARGET_PROPERTY(sources ${_targetName} SOURCES)
+			SET(_sourceFound FALSE)
+			FOREACH(_source ${sources})
+				SET(PCH_COMPILE_FLAGS "")
+				IF(_source MATCHES \\.\(cc|cxx|cpp\)$)
+			GET_FILENAME_COMPONENT(_sourceWe ${_source} NAME_WE)
+			IF(_sourceWe STREQUAL ${_inputWe})
+				SET(PCH_COMPILE_FLAGS "${PCH_COMPILE_FLAGS} /Yc${_input}")
+				SET(_sourceFound TRUE)
+			ELSE(_sourceWe STREQUAL ${_inputWe})
+				SET(PCH_COMPILE_FLAGS "${PCH_COMPILE_FLAGS} /Yu${_input}")
+				IF(FORCEINCLUDE)
+					SET(PCH_COMPILE_FLAGS "${PCH_COMPILE_FLAGS} /FI${_input}")
+				ENDIF(FORCEINCLUDE)
+			ENDIF(_sourceWe STREQUAL ${_inputWe})
+			SET_SOURCE_FILES_PROPERTIES(${_source} PROPERTIES COMPILE_FLAGS "${PCH_COMPILE_FLAGS}")
+				ENDIF(_source MATCHES \\.\(cc|cxx|cpp\)$)
+			ENDFOREACH()
+			IF(NOT _sourceFound)
+				MESSAGE(FATAL_ERROR "A source file for ${_input} was not found. Required for MSVC builds.")
+			ENDIF(NOT _sourceFound)
+		ENDIF()
+	 
+		IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+			message(">> PCH: Clang")
+			
+			GET_FILENAME_COMPONENT(_name ${_input} NAME)
+			SET(_source "${CMAKE_CURRENT_SOURCE_DIR}/${_input}")
+			SET(_outdir "${CMAKE_CURRENT_BINARY_DIR}/${_name}.gch")
+			MAKE_DIRECTORY(${_outdir})
+			SET(_output "${_outdir}/.c++")
+	
+			STRING(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" _flags_var_name)
+			SET(_compiler_FLAGS ${${_flags_var_name}})
+	
+			GET_DIRECTORY_PROPERTY(_directory_flags INCLUDE_DIRECTORIES)
+			FOREACH(item ${_directory_flags})
+				LIST(APPEND _compiler_FLAGS "-I${item}")
+			ENDFOREACH(item)
+		 
+			GET_DIRECTORY_PROPERTY(_directory_flags DEFINITIONS)
+			LIST(APPEND _compiler_FLAGS ${_directory_flags})
+		 
+			SEPARATE_ARGUMENTS(_compiler_FLAGS)
+			MESSAGE("${CMAKE_CXX_COMPILER} ${_compiler_FLAGS} -x c++-header -o ${_output} ${_source}")
+			ADD_CUSTOM_COMMAND(
+				OUTPUT ${_output}
+				COMMAND ${CMAKE_CXX_COMPILER} ${_compiler_FLAGS} -x c++-header -o ${_output} ${_source}
+				DEPENDS ${_source}
+			)
+			ADD_CUSTOM_TARGET(${_targetName}_gch DEPENDS ${_output})
+			ADD_DEPENDENCIES(${_targetName} ${_targetName}_gch)
+			SET_TARGET_PROPERTIES(${_targetName} PROPERTIES COMPILE_FLAGS "-D PCH -include-pch ${_output}")
+		ENDIF()
+	else()
+		message(">> PCH off")
+	endif()
+ENDMACRO()
+
 
 
 # Find Ogre ###################################################################
@@ -108,16 +186,10 @@ if(UNIX)
 	endif(EXISTS "/usr/local/lib/OGRE/cmake")
 endif(UNIX)
 find_package(OGRE REQUIRED)
-if(NOT OGRE_FOUND)
-	message(SEND_ERROR "Failed to find Ogre.")
-endif()
 include_directories(${OGRE_INCLUDE_DIRS})
 
 # Find OIS ####################################################################
 find_package(OIS REQUIRED)
-if(NOT OIS_FOUND)
-	message(SEND_ERROR "Failed to find OIS.")
-endif()
 include_directories(${OIS_INCLUDE_DIRS})
 
 # Find MyGUI ##################################################################
@@ -145,16 +217,9 @@ find_package(Bullet REQUIRED)
 include_directories(${BULLET_INCLUDE_DIRS})
 
 # Find Boost ##################################################################
-#if(WIN32 OR APPLE)
-#	set(Boost_USE_STATIC_LIBS TRUE)
-#else()
-#	# Statically linking boost to a dynamic Ogre build doesn't work on Linux 64bit
-#	set(Boost_USE_STATIC_LIBS ${OGRE_STATIC})
-#endif()
-
-set(Boost_USE_STATIC_LIBS TRUE)
-
-# Decide where to look
+if(Boost_USE_STATIC_LIBS STREQUAL "")
+	set(Boost_USE_STATIC_LIBS TRUE)
+endif()
 set(BOOST_ROOT_ENV $ENV{BOOST_ROOT})
 if(BOOST_ROOT_ENV)
 	# Get boost from a specifically defined folder
@@ -165,8 +230,6 @@ elseif(WIN32)
 	set(BOOST_ROOT $ENV{OGRE_HOME}/boost)
 	message("BOOST_ROOT: " ${BOOST_ROOT})
 endif()
-
-# Specify which linkable libraries we should find
 set(BOOST_COMPONENTS
 	thread
 	date_time
@@ -175,22 +238,9 @@ set(BOOST_COMPONENTS
 	program_options
 	chrono
 )
-
-# Find it
+message("Boost_USE_STATIC_LIBS: ${Boost_USE_STATIC_LIBS}")
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-if(NOT Boost_FOUND)
-	# Try again with the other type of libs
-	message("Boost wasn't found, trying again with the other link type")
-	set(Boost_USE_STATIC_LIBS NOT ${Boost_USE_STATIC_LIBS})
-	find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-	if(NOT Boost_FOUND)
-		message(SEND_ERROR "Failed to find Boost.")
-	endif()
-endif()
-
-# Set up referencing of Boost
 include_directories(${Boost_INCLUDE_DIR})
-add_definitions(-DBOOST_ALL_NO_LIB)
 
 # Add the boost libraries ogre uses
 set(OGRE_LIBRARIES
@@ -206,89 +256,43 @@ set(OGRE_LIBRARIES
 add_subdirectory(src)
 
 
-
 # Shared static library so we don't have to redundantly compile shared code
 add_library(shared STATIC ${shared_SRC})
+make_pch(shared src/precompiled_header.h)
 
 # Game client executable
 set(CLIENT_EXECUTABLE proto)
 add_executable(${CLIENT_EXECUTABLE} ${client_SRC})
 target_link_libraries(${CLIENT_EXECUTABLE} ${client_LIB} shared ${shared_LIB})
 set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
+make_pch(${CLIENT_EXECUTABLE} src/precompiled_header.h)
 
 # Game server executable
 set(SERVER_EXECUTABLE proto-server)
 add_executable(${SERVER_EXECUTABLE} ${server_SRC})
 target_link_libraries(${SERVER_EXECUTABLE} ${server_LIB} shared ${shared_LIB})
-
+make_pch(${SERVER_EXECUTABLE} src/precompiled_header.h)
 
 
 # File Installations ##########################################################
 
 #file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 #file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/media)
+add_custom_command(
+	TARGET shared POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+		"${PROJECT_SOURCE_DIR}/media"
+		"$<TARGET_FILE_DIR:shared>/media"
+)
 
-if(MSVC)
-	# Media
-	install(DIRECTORY
-		${CMAKE_SOURCE_DIR}/media
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
-		CONFIGURATIONS Release RelWithDebInfo
-	)
-	install(DIRECTORY
-		${CMAKE_SOURCE_DIR}/media
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
-		CONFIGURATIONS Debug
-	)
-
-	# DLL and plugins
-	install(FILES
-		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
-		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
-		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
-		${OGRE_PLUGIN_DIR_REL}/OIS.dll
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release
-		CONFIGURATIONS Release
-	)
-	# For some reason MSVC links both release and debug ogre/ois dlls
-	install(FILES
-		${OGRE_PLUGIN_DIR_REL}/OgreMain.dll
-		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
-		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
-		${OGRE_PLUGIN_DIR_REL}/OIS.dll
-		${OGRE_PLUGIN_DIR_DBG}/OgreMain_d.dll
-		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
-		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
-		${OGRE_PLUGIN_DIR_DBG}/OIS_d.dll
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug
-		CONFIGURATIONS Debug
-	)
-endif()
 if(UNIX)
-	set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME})
-	set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX})
-	
-	# Media
-	install(DIRECTORY
-		${CMAKE_SOURCE_DIR}/media
-		DESTINATION .
-	)
-	# Executables
-#	install(TARGETS
-#		${CLIENT_EXECUTABLE}
-#		RUNTIME DESTINATION .
-#	)
-
 	list(GET OGRE_RenderSystem_GL_LIBRARIES 1 OGRE_RenderSystem_GL_LINK)
 	GET_FILENAME_COMPONENT(OGRE_RenderSystem_GL_FILE ${OGRE_RenderSystem_GL_LINK} REALPATH)
-	install(FILES
-		${OGRE_RenderSystem_GL_FILE}
-		${OGRE_RenderSystem_GL_LINK}
-		DESTINATION .
+	add_custom_command(
+		TARGET ${CLIENT_EXECUTABLE} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy
+			${OGRE_RenderSystem_GL_LINK}
+			"$<TARGET_FILE_DIR:${CLIENT_EXECUTABLE}>"
 	)
 endif()
 
-
-
-
- 

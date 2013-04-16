@@ -1,5 +1,11 @@
+
+
 #include "timer.h"
-#include <boost/thread.hpp>
+
+#ifndef PCH
+	#include <boost/thread.hpp>
+#endif
+
 
 typedef boost::chrono::duration<double> dsec;
 

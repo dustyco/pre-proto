@@ -1,6 +1,10 @@
 #pragma once
 #include <stdlib.h>
-#include <boost/filesystem.hpp>
+
+
+#ifndef PCH
+	#include <boost/filesystem.hpp>
+#endif
 
 // Read in all the data in a passed file
 // and return it as a malloc()ed buffer

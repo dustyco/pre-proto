@@ -10,8 +10,10 @@
 	#include <pwd.h>
 #endif
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
+#ifndef PCH
+	#include <boost/filesystem/operations.hpp>
+	#include <boost/filesystem/path.hpp>
+#endif
 namespace fs = boost::filesystem;
 //#include <boost/program_options.hpp>
 //namespace po = boost::program_options;

@@ -1,8 +1,10 @@
 #pragma once
 
 
-#include <boost/chrono.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#ifndef PCH
+	#include <boost/chrono.hpp>
+	#include <boost/thread/recursive_mutex.hpp>
+#endif
 
 
 // A variable speed clock that provides:

@@ -1,8 +1,10 @@
 #pragma once
 
 
-#include <OGRE/Ogre.h>
-#include <OIS/OIS.h>
+#ifndef PCH
+	#include <OGRE/Ogre.h>
+	#include <OIS/OIS.h>
+#endif
 
 #include "common.h"
 #include "config/config.h"

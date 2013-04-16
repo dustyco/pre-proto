@@ -1,8 +1,10 @@
 #pragma once
 
 
-#include <OIS/OIS.h>
-#include <boost/thread/recursive_mutex.hpp>
+#ifndef PCH
+	#include <OIS/OIS.h>
+	#include <boost/thread/recursive_mutex.hpp>
+#endif
 
 #include "../util/linear_algebra.h"
 using namespace linear_algebra;
