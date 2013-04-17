@@ -4,21 +4,14 @@
 #include <sstream>
 #include <stack>
 
-#ifndef PCH
-	#warning no-pch
-	#include <boost/property_tree/info_parser.hpp>
-	#include <boost/tokenizer.hpp>
-	#include <boost/filesystem.hpp>
-#else
-	#warning pch
-#endif
+#include <boost/property_tree/info_parser.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/filesystem.hpp>
 using boost::property_tree::ptree;
 namespace fs = boost::filesystem;
 
 #include "../logging/logging.h"
 #include "ConfigManager.h"
-
-
 
 
 void ConfigManager::Tree::remove (std::string key) {

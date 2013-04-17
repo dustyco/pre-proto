@@ -82,7 +82,6 @@ endmacro()
 macro(propagate_groups)
 	file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
 	if(_relPath)
-		set(PCH_PAIRS ${PCH_PAIRS} PARENT_SCOPE)
 		set(_groups ${_groups} PARENT_SCOPE)
 		foreach(_group ${_groups})
 			set(${_group}_SRC ${${_group}_SRC} PARENT_SCOPE)
@@ -172,85 +171,9 @@ set(OGRE_LIBRARIES
 )
 
 
-# Create PCH files and targets ######################################################################
-if("${PCH}" STREQUAL "")
-	set(PCH TRUE)
-endif()
-macro(make_pch_files)
-	if(PCH)
-		file(GLOB _pch_files "${CMAKE_SOURCE_DIR}/src/pch/*.h")
-		message("_pch_files:")
-		if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-			foreach(_pch_file ${_pch_files})
-				message("	${_pch_file}")
-				GET_FILENAME_COMPONENT(_pch_name ${_pch_file} NAME_WE)
-				message("	${_pch_name}")
-	
-				SET(_outdir "${CMAKE_BINARY_DIR}/pch")
-				MAKE_DIRECTORY("${CMAKE_BINARY_DIR}/pch")
-				SET(_output "${_outdir}/${_pch_name}.h.gch")
-	
-				STRING(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" _flags_var_name)
-				SET(_compiler_FLAGS ${${_flags_var_name}})
-
-				GET_DIRECTORY_PROPERTY(_directory_flags INCLUDE_DIRECTORIES)
-				FOREACH(item ${_directory_flags})
-					LIST(APPEND _compiler_FLAGS "-I${item}")
-				ENDFOREACH(item)
-			 
-				GET_DIRECTORY_PROPERTY(_directory_flags DEFINITIONS)
-				LIST(APPEND _compiler_FLAGS ${_directory_flags})
-			 
-				SEPARATE_ARGUMENTS(_compiler_FLAGS)
-				MESSAGE("${CMAKE_CXX_COMPILER} ${_compiler_FLAGS} -x c++-header -o ${_output} ${_pch_file}")
-				ADD_CUSTOM_COMMAND(
-					OUTPUT ${_output}
-					COMMAND ${CMAKE_CXX_COMPILER} ${_compiler_FLAGS} -x c++-header -o ${_output} ${_pch_file}
-					DEPENDS ${_source}
-				)
-#				ADD_CUSTOM_TARGET(${_pch_name} DEPENDS ${_output})
-			endforeach()
-		endif()
-		
-		list(LENGTH PCH_PAIRS _length)
-		while(NOT ${_length} STREQUAL "0")
-			list(GET PCH_PAIRS 0 _pch_name)
-			list(GET PCH_PAIRS 1 _source)
-			list(REMOVE_AT PCH_PAIRS 0 1)
-			list(LENGTH PCH_PAIRS _length)
-			set_property(
-				SOURCE "${_source}"
-				APPEND
-				PROPERTY COMPILE_FLAGS "-D PCH -include-pch ${CMAKE_BINARY_DIR}/pch/${_pch_name}.h.gch"
-			)
-			set_property(
-				SOURCE "${_source}"
-				APPEND
-				PROPERTY OBJECT_DEPENDS "${CMAKE_BINARY_DIR}/pch/${_pch_name}.h.gch"
-			)
-		endwhile()
-	endif()
-endmacro()
-
-# Include a precompiled header (src/pch/*.h) to source files
-# Usage: include_pch([pch name] [source filename]...)
-#        After, call propagate_groups() once in each directory
-macro(include_pch)
-	set(_arguments ${ARGN})
-	list(GET _arguments 0 _pch)
-	list(REMOVE_AT _arguments 0)
-	foreach(_source ${_arguments})
-		list(APPEND PCH_PAIRS "${_pch}")
-		list(APPEND PCH_PAIRS "${CMAKE_CURRENT_SOURCE_DIR}/${_source}")
-	endforeach()
-endmacro()
-
-
-
 
 # Work through the source tree
 add_subdirectory(src)
-make_pch_files()
 
 
 # Shared static library so we don't have to redundantly compile shared code

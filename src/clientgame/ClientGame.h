@@ -1,9 +1,7 @@
 #pragma once
 
 
-#ifndef PCH
-	#include <OGRE/Ogre.h>
-#endif
+#include <OGRE/Ogre.h>
 
 #include "../util/Clock.h"
 #include "../sim/Sim.h"

@@ -1,9 +1,7 @@
 #pragma once
 
 
-#ifndef PCH
-	#include <OGRE/Ogre.h>
-#endif
+#include <OGRE/Ogre.h>
 #include "../config/config.h"
 
 #define WINDOW_TITLE "Proto"

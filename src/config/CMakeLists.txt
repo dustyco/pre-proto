@@ -1,8 +1,5 @@
 
 
-# Include PCH files
-include_pch(boost_stuff ConfigManager.cpp Tree.cpp)
-
 # Add source files names to groups
 add_sources(shared
 	ConfigManager.cpp

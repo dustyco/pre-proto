@@ -1,8 +1,6 @@
 #pragma once
 
-#ifndef PCH
-	#include <boost/chrono.hpp>
-#endif
+#include <boost/chrono.hpp>
 
 
 class timer {

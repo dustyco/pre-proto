@@ -6,12 +6,7 @@
 #include <map>
 #include <list>
 
-#ifndef PCH
-	#warning no-pch
-	#include <boost/property_tree/ptree.hpp>
-#else
-	#warning pch
-#endif
+#include <boost/property_tree/ptree.hpp>
 using boost::property_tree::ptree;
 
 #include "../logging/logging.h"

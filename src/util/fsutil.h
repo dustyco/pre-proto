@@ -2,9 +2,7 @@
 #include <stdlib.h>
 
 
-#ifndef PCH
-	#include <boost/filesystem.hpp>
-#endif
+#include <boost/filesystem.hpp>
 
 // Read in all the data in a passed file
 // and return it as a malloc()ed buffer

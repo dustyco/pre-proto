@@ -3,10 +3,8 @@
 #include <iostream>
 using namespace std;
 
-#ifndef PCH
-	#include <boost/thread/locks.hpp>
-	#include <boost/thread/condition_variable.hpp>
-#endif
+#include <boost/thread/locks.hpp>
+#include <boost/thread/condition_variable.hpp>
 using namespace boost;
 
 #include "Clock.h"
