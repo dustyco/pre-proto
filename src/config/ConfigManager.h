@@ -7,7 +7,10 @@
 #include <list>
 
 #ifndef PCH
+	#warning no-pch
 	#include <boost/property_tree/ptree.hpp>
+#else
+	#warning pch
 #endif
 using boost::property_tree::ptree;
 
