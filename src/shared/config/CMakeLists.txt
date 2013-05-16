@@ -3,7 +3,6 @@
 # Add source files names to groups
 add_sources(shared
 	ConfigManager.cpp
-	Tree.cpp
 )
 
 # Add library names to groups
