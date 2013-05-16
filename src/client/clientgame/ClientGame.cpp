@@ -3,7 +3,7 @@
 #include <iostream>
 using namespace std;
 
-#include "../common.h"
+#include "common.h"
 #include "ClientGame.h"
 
 

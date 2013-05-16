@@ -1,48 +1,7 @@
 
 
 cmake_minimum_required(VERSION 2.8)
-
 project(pre-proto CXX)
-
-# Hide a a strange bug where ogre and boost headers explode with warnings
-if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4275")
-endif()
-
-# Build in GNU profiling
-# Other compiler id's: Clang, GNU, Intel, MSVC
-if(PROFILE)
-#	if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-#		message("Building in C GNU profiling")
-#		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
-#	else()
-#		message("Requested C profiling but we don't have it for this compiler: " ${CMAKE_C_COMPILER_ID})
-#	endif()
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-		message("Building in CXX GNU profiling")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
-	else()
-		message("Requested CXX profiling but we don't have it for this compiler: " ${CMAKE_CXX_COMPILER_ID})
-	endif()
-endif()
-
-# Build type
-# Options: Debug, Release, RelWithDebInfo, MinSizeRel
-# Only Debug, Release on MSVC
-if(CMAKE_BUILD_TYPE STREQUAL "")
-	# CMake defaults to leaving CMAKE_BUILD_TYPE empty
-	if(UNIX)
-		set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
-	else()
-		set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release." FORCE)
-	endif()
-	message("Default build type: " ${CMAKE_BUILD_TYPE})
-else()
-	message("Chosen build type: " ${CMAKE_BUILD_TYPE})
-endif()
-set(CMAKE_DEBUG_POSTFIX "_d")
-
 
 
 # Subdirectories can create source file groups
@@ -56,11 +15,12 @@ macro(add_sources)
 	list(APPEND _groups ${_group})
 	file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
 	foreach(_src ${_arguments})
-		if(_relPath)
-			list(APPEND ${_group}_SRC "${_relPath}/${_src}")
-		else()
-			list(APPEND ${_group}_SRC "${_src}")
-		endif()
+#		if(_relPath)
+#			list(APPEND ${_group}_SRC "${_relPath}/${_src}")
+#		else()
+#			list(APPEND ${_group}_SRC "${_src}")
+#		endif()
+		list(APPEND ${_group}_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${_src}")
 	endforeach()
 endmacro()
 
@@ -89,6 +49,47 @@ macro(propagate_groups)
 		endforeach()
 	endif()
 endmacro()
+
+
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+	# Hide a a strange bug where ogre and boost headers explode with warnings
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4275")
+endif()
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+	# Suppress switch warnings
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
+endif()
+
+
+# Build in GNU profiling
+# Other compiler id's: Clang, GNU, Intel, MSVC
+if(PROFILE)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		message("Building in CXX GNU profiling")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+	else()
+		message("Requested CXX profiling but we don't have it for this compiler: " ${CMAKE_CXX_COMPILER_ID})
+	endif()
+endif()
+
+
+# Build type
+# Options: Debug, Release, RelWithDebInfo, MinSizeRel
+# Only Debug, Release on MSVC
+if(CMAKE_BUILD_TYPE STREQUAL "")
+	# CMake defaults to leaving CMAKE_BUILD_TYPE empty
+	if(UNIX)
+		set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
+	else()
+		set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release." FORCE)
+	endif()
+	message("Default build type: " ${CMAKE_BUILD_TYPE})
+else()
+	message("Chosen build type: " ${CMAKE_BUILD_TYPE})
+endif()
+set(CMAKE_DEBUG_POSTFIX "_d")
+
 
 # Find Ogre ###################################################################
 # Locate its cmake modules
@@ -171,45 +172,10 @@ set(OGRE_LIBRARIES
 )
 
 
-
 # Work through the source tree
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(src)
 
 
-# Shared static library so we don't have to redundantly compile shared code
-add_library(shared STATIC ${shared_SRC})
 
-# Game client executable
-set(CLIENT_EXECUTABLE proto)
-add_executable(${CLIENT_EXECUTABLE} ${client_SRC})
-target_link_libraries(${CLIENT_EXECUTABLE} ${client_LIB} shared ${shared_LIB})
-set_target_properties(${CLIENT_EXECUTABLE} PROPERTIES DEBUG_POSTFIX _d)
-
-# Game server executable
-set(SERVER_EXECUTABLE proto-server)
-add_executable(${SERVER_EXECUTABLE} ${server_SRC})
-target_link_libraries(${SERVER_EXECUTABLE} ${server_LIB} shared ${shared_LIB})
-
-
-# File Installations ##########################################################
-
-#file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX})
-#file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/media)
-add_custom_command(
-	TARGET shared POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-		"${PROJECT_SOURCE_DIR}/media"
-		"$<TARGET_FILE_DIR:shared>/media"
-)
-
-if(UNIX)
-	list(GET OGRE_RenderSystem_GL_LIBRARIES 1 OGRE_RenderSystem_GL_LINK)
-	GET_FILENAME_COMPONENT(OGRE_RenderSystem_GL_FILE ${OGRE_RenderSystem_GL_LINK} REALPATH)
-	add_custom_command(
-		TARGET ${CLIENT_EXECUTABLE} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy
-			${OGRE_RenderSystem_GL_LINK}
-			"$<TARGET_FILE_DIR:${CLIENT_EXECUTABLE}>"
-	)
-endif()
 

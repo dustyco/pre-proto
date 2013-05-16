@@ -6,9 +6,9 @@ using namespace std;
 
 #include <boost/thread/locks.hpp>
 
-#include "../logging/logging.h"
-#include "../util/singleton.h"
-#include "../video/DisplayManager.h"
+#include "logging/logging.h"
+#include "util/singleton.h"
+#include "video/DisplayManager.h"
 
 #include "InputManager.h"
 

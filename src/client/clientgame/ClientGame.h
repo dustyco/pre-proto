@@ -3,8 +3,8 @@
 
 #include <OGRE/Ogre.h>
 
-#include "../util/Clock.h"
-#include "../sim/Sim.h"
+#include "util/Clock.h"
+#include "sim/Sim.h"
 
 
 // 

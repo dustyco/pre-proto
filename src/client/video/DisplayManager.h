@@ -2,7 +2,7 @@
 
 
 #include <OGRE/Ogre.h>
-#include "../config/config.h"
+#include "config/config.h"
 
 #define WINDOW_TITLE "Proto"
 #define DEFAULT_FULLSCREEN false

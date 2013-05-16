@@ -5,8 +5,8 @@
 using namespace std;
 
 #include "DisplayManager.h"
-#include "../logging/logging.h"
-#include "../util/singleton.h"
+#include "logging/logging.h"
+#include "util/singleton.h"
 
 
 DisplayManager::DisplayManager ()
