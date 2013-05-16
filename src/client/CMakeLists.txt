@@ -5,6 +5,8 @@ add_subdirectory(clientgame)
 add_subdirectory(input)
 add_subdirectory(video)
 
+message("CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+
 # Game client executable
 set(target_NAME proto)
 add_executable(${target_NAME} main.cpp ${client_SRC})

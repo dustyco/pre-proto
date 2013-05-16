@@ -3,9 +3,7 @@
 
 #include <OIS/OIS.h>
 #include <boost/thread/recursive_mutex.hpp>
-
-#include "util/linear_algebra.h"
-using namespace linear_algebra;
+#include "common.h"
 
 
 // Query a buffered list of events since the last check
@@ -47,7 +45,7 @@ public:
 	bool            isMousePressed  (OIS::MouseButtonID btn);
 	bool            isKeyPressed    (OIS::KeyCode k);
 	OIS::MouseState getMouseState   ();
-	vec<2,int>      mousePosition   ();
+	Vec2i           mousePosition   ();
 	
 	// Non-API callbacks
 	bool keyPressed    (const OIS::KeyEvent& evt);
@@ -69,7 +67,7 @@ private:
 	bool               m_reconnect;
 	
 	OIS::MouseState    m_mouseState;
-	vec<2,int>         m_mousePos;
+	Vec2i         m_mousePos;
 	
 	OIS::Keyboard*     m_keybd;
 	OIS::Mouse*        m_mouse;

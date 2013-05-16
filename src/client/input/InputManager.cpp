@@ -91,7 +91,7 @@ void InputManager::setMouseFreedom (bool mouse_freedom) {
 		m_reconnect = true;
 	}
 }
-vec<2,int> InputManager::mousePosition() {
+Vec2i InputManager::mousePosition() {
 	boost::lock_guard<boost::recursive_mutex>(*this);
 	return m_mousePos;
 }
@@ -179,7 +179,7 @@ bool InputManager::mousePressed(const OIS::MouseEvent& evt, OIS::MouseButtonID b
 }
 bool InputManager::mouseMoved(const OIS::MouseEvent& evt) {
 	m_mouseState = evt.state;
-	m_mousePos += vec<2,int>(evt.state.X.rel, evt.state.Y.rel);
+	m_mousePos += Vec2i(evt.state.X.rel, evt.state.Y.rel);
 	Event event(Event::MOUSE);
 	event.state = evt.state;
 	pushEvent(event);

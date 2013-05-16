@@ -51,12 +51,12 @@ macro(propagate_groups)
 endmacro()
 
 
-if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	# Hide a a strange bug where ogre and boost headers explode with warnings
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4275")
 endif()
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	# Suppress switch warnings
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
 endif()
