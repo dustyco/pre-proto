@@ -5,7 +5,6 @@ add_subdirectory(entity)
 # Add source files names to groups
 add_sources(shared
 	Sim.cpp
-	CopyableScene.cpp
 )
 
 # Add library names to groups

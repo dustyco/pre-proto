@@ -1,8 +1,7 @@
 #pragma once
 
 
-#include <iostream>
-
+#include <string>
 #include "base.h"
 
 
@@ -14,6 +13,7 @@ namespace entity {
 	public:
 		 RenderComponent (System* s, std::string model) : Component(s), model(model) {}
 		~RenderComponent ();
+		virtual void update () {}
 		
 		std::string model;
 	};
@@ -23,9 +23,9 @@ namespace entity {
 	
 	class RenderSystem : public System {
 	public:
-		 RenderComponent* create (std::string model);
 		~RenderSystem ();
-		void report ();
+		virtual RenderComponent* create (std::string model);
+		virtual void update () {}
 	};
 	
 }

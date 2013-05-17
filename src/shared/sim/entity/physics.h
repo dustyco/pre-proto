@@ -2,7 +2,7 @@
 
 
 #include <bullet/btBulletDynamicsCommon.h>
-
+#include "common.h"
 #include "base.h"
 
 
@@ -12,10 +12,10 @@ namespace entity {
 
 	class PhysicsComponent : public Component {
 	public:
-		 PhysicsComponent (System* s, float x, float y, float z) : Component(s), x(x), y(y), z(z) {}
+		 PhysicsComponent (System* s, Vec3 pos) : Component(s), pos(pos) {}
 		~PhysicsComponent ();
 		
-		float x, y, z;
+		Vec3 pos;
 	};
 	
 	
@@ -25,7 +25,8 @@ namespace entity {
 	public:
 		 PhysicsSystem ();
 		~PhysicsSystem ();
-		 PhysicsComponent* create (float x, float y, float z);
+		 PhysicsComponent* create (Vec3 pos);
+		 void tick (double dt);
 	
 	private:
 		btDefaultCollisionConfiguration*     collision_configuration;

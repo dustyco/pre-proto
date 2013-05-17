@@ -1,10 +1,10 @@
 
 
-add_subdirectory(entity)
+#add_subdirectory(entity)
 
 # Add source files names to groups
 add_sources(client
-	ClientGame.cpp
+	ogre.cpp
 )
 
 # Add library names to groups

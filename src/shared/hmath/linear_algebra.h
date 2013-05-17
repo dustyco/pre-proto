@@ -16,6 +16,7 @@
 
 
 #pragma once
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <cmath>
@@ -36,6 +37,7 @@ namespace hmath {
 	// Totally generic
 	template <int N, class R>
 	struct vec {
+		vec (const R input[N]) { std::copy(input, input+N, a); }
 		static vec origin ();
 		
 		R&       operator[] (unsigned int i)       { return a[i]; }
@@ -49,6 +51,7 @@ namespace hmath {
 	struct vec<2,R> {
 		vec () {};
 		vec (R x, R y) : x(x), y(y) {}
+		vec (const R input[2]) { std::copy(input, input+2, a); }
 		
 		static vec origin () { return vec(0,0); }
 		static vec x_unit () { return vec(1,0); }
@@ -71,6 +74,7 @@ namespace hmath {
 	struct vec<3,R> {
 		vec () {};
 		vec (R x, R y, R z) : x(x), y(y), z(z) {}
+		vec (const R input[3]) { std::copy(input, input+3, a); }
 		
 		static vec origin () { return vec(0,0,0); }
 		static vec x_unit () { return vec(1,0,0); }

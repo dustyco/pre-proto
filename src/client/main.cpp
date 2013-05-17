@@ -8,18 +8,24 @@
 #include "input/input.h"
 #include "common.h"
 #include "config/config.h"
-#include "util/Clock.h"
+//#include "util/Clock.h"
 #include "clientgame/ClientGame.h"
 
 #ifndef OGRE_PLUGIN_DIR
 #define OGRE_PLUGIN_DIR "."
 #endif
 
-
+/*
+	Main application class which handles:
+		render window
+		input (and injection for game panels)
+		control, display, and communication for each game panel (normal and test)
+		main menu
+*/
 struct Client : public Ogre::FrameListener {
 	InputManager::Subscription* m_sub;
 	bool                running;
-	Clock               m_clock;
+//	Clock               m_clock;
 	Ogre::SceneManager* m_app_sceneMgr;
 	Ogre::Camera*       m_app_camera;
 	Ogre::Viewport*     m_app_viewport;
@@ -35,7 +41,7 @@ struct Client : public Ogre::FrameListener {
 	Ogre::TexturePtr    m_game_b_rtt;
 	float               m_game_shift; // 1=a, -1=b
 	int                 m_width, m_height;
-
+	double              time;
 
 	void init (int argc, char** argv);
 	void run ();
@@ -117,7 +123,7 @@ void Client::init (int argc, char **argv) {
 	createGamePanels();
 	
 	// Keep time since the start of this session
-	m_clock.setEpoch();
+//	m_clock.setEpoch();
 	
 	INFO("Proto initialized");
 }
@@ -149,7 +155,8 @@ bool Client::frameStarted (const Ogre::FrameEvent& evt)
 	REF(InputManager, input);
 	REF(ConfigManager, config);
 	
-	double time = boost::chrono::duration<double>(m_clock.getDurationSinceEpoch()).count();
+//	double time = boost::chrono::duration<double>(m_clock.getDurationSinceEpoch()).count();
+	time += 1.0/60.0;
 	
 	// Input
 	InputManager::Event event;
@@ -191,7 +198,7 @@ bool Client::frameStarted (const Ogre::FrameEvent& evt)
 	
 	// Play with game speed
 //	m_game_b->m_clock.warp(pow(1.2, time_r));
-	m_game_b->m_clock.warp(sin(time)*sin(time));
+//	m_game_b->m_clock.warp(sin(time)*sin(time));
 //	m_game_b->m_clock.unwarp();
 
 	m_game_a_rect->setCorners(m_game_shift-2.0f, 1.0f, m_game_shift+0.0f, -1.0f, false);

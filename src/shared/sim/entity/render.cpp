@@ -2,9 +2,6 @@
 
 #include "render.h"
 
-#include <iostream>
-using namespace std;
-
 
 namespace entity {
 	
@@ -13,13 +10,13 @@ namespace entity {
 	RenderComponent::~RenderComponent () {
 	}
 	
+	
+	// System /////////////////////////////////////////////////////////////////
+	
 	RenderSystem::~RenderSystem () {
 		// Must be called before destroying anything else
 		destroyAttachedEntities();
 	}
-	
-	
-	// System /////////////////////////////////////////////////////////////////
 	
 	RenderComponent* RenderSystem::create (std::string model) {
 		RenderComponent* c = new RenderComponent(this, model);

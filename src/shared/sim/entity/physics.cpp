@@ -36,10 +36,14 @@ namespace entity {
 		// Must be called before destroying anything else
 		destroyAttachedEntities();
 	}
-	PhysicsComponent* PhysicsSystem::create (float x, float y, float z) {
-		PhysicsComponent* c = new PhysicsComponent(this, x, y, z);
+	PhysicsComponent* PhysicsSystem::create (Vec3 pos) {
+		PhysicsComponent* c = new PhysicsComponent(this, pos);
 		comps.insert(c);
 		return c;
+	}
+	
+	void PhysicsSystem::tick (double dt) {
+		
 	}
 	
 }
