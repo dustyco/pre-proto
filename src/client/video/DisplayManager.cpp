@@ -8,6 +8,11 @@ using namespace std;
 #include "logging/logging.h"
 #include "util/singleton.h"
 
+const string WINDOW_TITLE     = "Proto";
+const bool DEFAULT_FULLSCREEN = false;
+const bool DEFAULT_VSYNC      = true;
+const bool DEFAULT_GAMMA      = true;
+
 
 DisplayManager::DisplayManager ()
 {
@@ -68,6 +73,8 @@ void DisplayManager::applySettings ()
 		if (new_misc["vsync"].compare((m_renderWindow->isVSyncEnabled())?"true":"false") != 0) 
 			m_renderWindow->setVSyncEnabled(!m_renderWindow->isVSyncEnabled());
 	}
+	cout << "vsync: " << (m_renderWindow->isVSyncEnabled()?"true":"false") << endl;
+	cout << "fps: " << m_renderWindow->getAverageFPS() << endl;
 }
 
 void DisplayManager::reinitWindow () {
@@ -202,7 +209,12 @@ void DisplayManager::_getSettings (int& width, int& height, bool& fullscreen, Og
 	misc["FSAA"] = _getValidFSAA();
 	
 	// vsync
-	misc["vsync"] = ((config.get("video:display.vsync", DEFAULT_VSYNC))?"true":"false");
+	string vsync = config.get("video:display.vsync", "");
+	if (vsync.compare("true")==0 || vsync.compare("false")==0) misc["vsync"] = vsync;
+	else {
+		config.set("video:display.vsync", "auto");
+		misc["vsync"] = (DEFAULT_VSYNC?"true":"false");
+	}
 	// TODO vsyncInterval
 //	misc["vsyncInterval"] = "2";
 	

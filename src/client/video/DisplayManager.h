@@ -4,11 +4,6 @@
 #include <OGRE/Ogre.h>
 #include "config/config.h"
 
-#define WINDOW_TITLE "Proto"
-#define DEFAULT_FULLSCREEN false
-#define DEFAULT_VSYNC true
-#define DEFAULT_GAMMA true
-
 
 // In charge of the ogre window according to settings in the ConfigManager
 // Outside systems are to use the applySettings function
